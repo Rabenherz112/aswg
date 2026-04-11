@@ -559,9 +559,11 @@ class TemplateHelpers:  # pylint: disable=too-many-public-methods
                 # Handle template string evaluation
                 if isinstance(enabled_condition, str) and '{{' in enabled_condition:
                     try:
-                        # Simple template evaluation for alternatives.enabled
-                        if 'alternatives.enabled' in enabled_condition:
-                            enabled = self.config.get('alternatives.enabled', False)
+                        # Generic evaluation for patterns like {{ section.option }}
+                        match = re.search(r"\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}", enabled_condition)
+                        if match:
+                            config_key = match.group(1)
+                            enabled = bool(self.config.get(config_key, False))
                             if not enabled:
                                 continue
                     except (AttributeError, KeyError, TypeError):

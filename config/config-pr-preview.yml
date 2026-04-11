@@ -147,6 +147,9 @@ hero:
 navigation:
   - title: "Browse"
     url: "/browse.html"
+  - title: "Roadmap"
+    url: "/roadmap.html"
+    enabled: "{{ roadmap.enabled }}"
   - title: "Alternatives"
     url: "/alternatives.html"
     enabled: "{{ alternatives.enabled }}"  # Conditional navigation
@@ -172,6 +175,9 @@ footer:
           url: "/"
         - title: "Browse"
           url: "/browse.html"
+        - title: "Roadmap"
+          url: "/roadmap.html"
+          enabled: "{{ roadmap.enabled }}"
         - title: "Alternatives"
           url: "/alternatives.html"
           enabled: "{{ alternatives.enabled }}"
@@ -214,6 +220,13 @@ alternatives:
   min_alternatives: 2  # Minimum number of alternatives required to show a software
   show_more_threshold: 3 # Show "Show More" button if there are more than this number of alternatives
   show_statistics: true  # Show statistics section on the page
+
+# =============================================================================
+# ROADMAP PAGE CONFIGURATION
+# =============================================================================
+roadmap:
+  enabled: true
+  removed_from_catalog_alerts: true # Apps that disappear from the catalog are listed under "Removed From Catalog"
 
 # =============================================================================
 # SEARCH CONFIGURATION

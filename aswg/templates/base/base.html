@@ -23,6 +23,8 @@
     <meta name="lazy-load-images" content="{{ performance_config.get('lazy_load_images', true) }}">
     <meta name="show-project-icons" content="{{ ui_config.get('show_project_icons', true) }}">
     <meta name="base-path" content="{{ base_path }}">
+    <meta name="roadmap-enabled" content="{{ roadmap_config.get('enabled', true) }}">
+    <meta name="roadmap-removed-catalog-alerts" content="{{ 'true' if roadmap_config.get('removed_from_catalog_alerts', true) else 'false' }}">
     {% if alternatives_config %}
     <meta name="alternatives-show-more-threshold" content="{{ alternatives_config.get('show_more_threshold', 3) }}">
     <meta name="alternatives-description-length" content="{{ ui_config.get('truncation', {}).get('alternatives_description_length', 90) }}">
@@ -243,6 +245,9 @@
     <script src="{{ asset_url('static/js/theme.js') }}"></script>
     <script src="{{ asset_url('static/js/search.js') }}"></script>
     <script src="{{ asset_url('static/js/app.js') }}"></script>
+    {% if roadmap_config.get('enabled', true) %}
+    <script src="{{ asset_url('static/js/roadmap-store.js') }}"></script>
+    {% endif %}
 
     {% block extra_js %}{% endblock %}
 </body>
