@@ -1,5 +1,22 @@
 [
   {
+    "number": 76,
+    "title": "build(deps): update beautifulsoup4 requirement from >=4.13.4 to >=4.14.3",
+    "author": "dependabot[bot]",
+    "branch": "dependabot/pip/beautifulsoup4-gte-4.14.3",
+    "commit": "0ea0c15",
+    "commit_full": "0ea0c1551c313b6322a6b5dc0b3a25088bac4638",
+    "url": "pr-76/",
+    "pr_url": "https://github.com/Rabenherz112/aswg/pull/76",
+    "updated": "2026-04-13T01:47:30+00:00",
+    "build": {
+      "duration": "30s",
+      "total_files": "1330",
+      "html_pages": "1315",
+      "size": "33M"
+    }
+  },
+  {
     "number": 75,
     "title": "build(deps): update minify-html requirement from >=0.16.4 to >=0.18.1",
     "author": "dependabot[bot]",
