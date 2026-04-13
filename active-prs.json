@@ -1,5 +1,22 @@
 [
   {
+    "number": 75,
+    "title": "build(deps): update minify-html requirement from >=0.16.4 to >=0.18.1",
+    "author": "dependabot[bot]",
+    "branch": "dependabot/pip/minify-html-gte-0.18.1",
+    "commit": "2d20b4f",
+    "commit_full": "2d20b4f670af230437af486eab836482bf2bac21",
+    "url": "pr-75/",
+    "pr_url": "https://github.com/Rabenherz112/aswg/pull/75",
+    "updated": "2026-04-13T01:47:22+00:00",
+    "build": {
+      "duration": "30s",
+      "total_files": "1330",
+      "html_pages": "1315",
+      "size": "33M"
+    }
+  },
+  {
     "number": 74,
     "title": "feat: add roadmap functionality",
     "author": "Rabenherz112",
