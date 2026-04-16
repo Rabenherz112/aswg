@@ -4,6 +4,7 @@ class RoadmapPage {
         this.basePath = document.querySelector('meta[name="base-path"]')?.content || '';
         this.roadmapEnabled = (document.querySelector('meta[name="roadmap-enabled"]')?.content || '').toLowerCase() === 'true';
         this.removedCatalogAlerts = (document.querySelector('meta[name="roadmap-removed-catalog-alerts"]')?.content || 'true').toLowerCase() === 'true';
+        this.shareUrlWarningLength = 3500;
         this.apps = [];
         this.appsById = {};
         this.catalogLoadOk = false;
@@ -27,7 +28,7 @@ class RoadmapPage {
             window.RoadmapStore.reconcileAgainstCatalog(this.apps, { trackRemoved: this.removedCatalogAlerts });
         }
         this.setupEventListeners();
-        this.checkShareHash();
+        await this.checkShareHash();
         if (!this.sharedState) this.renderAll();
     }
 
@@ -65,7 +66,14 @@ class RoadmapPage {
         if (importInput) importInput.addEventListener('change', (event) => this.importRoadmap(event));
 
         const shareBtn = document.getElementById('roadmap-share-button');
-        if (shareBtn) shareBtn.addEventListener('click', () => this.generateShareUrl());
+        if (shareBtn) {
+            shareBtn.addEventListener('click', () => {
+                this.generateShareUrl().catch((error) => {
+                    console.error('[roadmap] Failed to generate share URL:', error);
+                    this.showInlineMessage(shareBtn, 'Could not build a share link for this roadmap.', 'error');
+                });
+            });
+        }
 
         const board = document.getElementById('roadmap-kanban-board');
         if (board) {
@@ -188,7 +196,7 @@ class RoadmapPage {
     }
 
     /**
-     * Base64-encode a UTF-8 JSON string for URL hash fragments (replaces deprecated unescape/escape).
+     * Base64-encode a UTF-8 JSON string for URL hash fragments.
      */
     utf8JsonToBase64(jsonString) {
         const bytes = new TextEncoder().encode(jsonString);
@@ -205,6 +213,48 @@ class RoadmapPage {
         const bytes = new Uint8Array(binary.length);
         for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
         return new TextDecoder().decode(bytes);
+    }
+
+    /**
+     * Convert byte array to URL-safe base64 without padding.
+     */
+    bytesToBase64Url(bytes) {
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+    }
+
+    /**
+     * Convert URL-safe base64 text into a byte array.
+     */
+    base64UrlToBytes(encoded) {
+        const normalized = encoded.replace(/-/g, '+').replace(/_/g, '/');
+        const padding = normalized.length % 4 === 0 ? '' : '='.repeat(4 - (normalized.length % 4));
+        const binary = atob(normalized + padding);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return bytes;
+    }
+
+    /**
+     * Compress UTF-8 text with gzip and return URL-safe base64.
+     */
+    async gzipToBase64Url(text) {
+        if (typeof CompressionStream !== 'function') throw new Error('CompressionStream unavailable');
+        const input = new Blob([text], { type: 'application/json' }).stream();
+        const compressedBuffer = await new Response(input.pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
+        return this.bytesToBase64Url(new Uint8Array(compressedBuffer));
+    }
+
+    /**
+     * Decode URL-safe base64 and inflate gzip data into UTF-8 text.
+     */
+    async base64UrlToGunzipText(encoded) {
+        if (typeof DecompressionStream !== 'function') throw new Error('DecompressionStream unavailable');
+        const compressedBytes = this.base64UrlToBytes(encoded);
+        const input = new Blob([compressedBytes]).stream();
+        const decodedBuffer = await new Response(input.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+        return new TextDecoder().decode(decodedBuffer);
     }
 
     renderDisabledState() {
@@ -765,7 +815,7 @@ class RoadmapPage {
         event.target.value = '';
     }
 
-    generateShareUrl() {
+    async generateShareUrl() {
         const shareBtn = document.getElementById('roadmap-share-button');
         const state = window.RoadmapStore.getState();
         const payload = {
@@ -777,30 +827,57 @@ class RoadmapPage {
         });
         try {
             const json = JSON.stringify(payload);
-            const encoded = this.utf8JsonToBase64(json);
-            const url = window.location.origin + window.location.pathname + '#share=' + encoded;
-            this.copyTextToClipboard(url).then((ok) => {
-                if (ok) {
-                    this.removeShareUrlFallback();
-                    if (shareBtn) this.showInlineMessage(shareBtn, 'Link copied to clipboard!', 'success');
-                } else if (shareBtn) {
-                    this.showInlineMessage(shareBtn, 'Select the link in the box below, then copy (long links work best this way on mobile).', 'error');
-                    this.showShareUrlFallback(url);
+            let hashPayload = 'b64:' + this.utf8JsonToBase64(json);
+            if (typeof CompressionStream === 'function') {
+                try {
+                    hashPayload = 'gz:' + await this.gzipToBase64Url(json);
+                } catch (error) {
+                    console.warn('[roadmap] Compression failed, using base64 fallback:', error);
                 }
-            });
+            }
+
+            const url = window.location.origin + window.location.pathname + '#share=' + hashPayload;
+            const urlTooLong = url.length > this.shareUrlWarningLength;
+            const copied = await this.copyTextToClipboard(url);
+            if (copied) {
+                this.removeShareUrlFallback();
+                if (shareBtn) {
+                    if (urlTooLong) {
+                        this.showInlineMessage(shareBtn, 'Link copied, but it is very long and may fail in some browsers.', 'error', 6000);
+                    } else {
+                        this.showInlineMessage(shareBtn, 'Link copied to clipboard!', 'success');
+                    }
+                }
+                return;
+            }
+
+            if (shareBtn) {
+                const failureMsg = urlTooLong
+                    ? 'Select the long link below and copy it manually. Some browsers may reject very long URLs.'
+                    : 'Select the link in the box below, then copy (long links work best this way on mobile).';
+                this.showInlineMessage(shareBtn, failureMsg, 'error', 6000);
+                this.showShareUrlFallback(url);
+            }
         } catch (error) {
             console.error('[roadmap] Failed to generate share URL:', error);
             if (shareBtn) this.showInlineMessage(shareBtn, 'Could not build a share link for this roadmap.', 'error');
         }
     }
 
-    checkShareHash() {
+    async checkShareHash() {
         const hash = window.location.hash;
         if (!hash.startsWith('#share=')) return;
 
         try {
             const encoded = hash.substring(7);
-            const json = this.base64ToUtf8Json(encoded);
+            let json = '';
+            if (encoded.startsWith('gz:')) {
+                json = await this.base64UrlToGunzipText(encoded.substring(3));
+            } else if (encoded.startsWith('b64:')) {
+                json = this.base64ToUtf8Json(encoded.substring(4));
+            } else {
+                json = this.base64ToUtf8Json(encoded);
+            }
             const shared = JSON.parse(json);
             if (!shared || !Array.isArray(shared.statuses)) return;
 
