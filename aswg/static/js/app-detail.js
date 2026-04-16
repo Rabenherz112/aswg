@@ -1,13 +1,4 @@
 // App detail page functionality
-/**
- * Escape text for safe insertion into roadmap control HTML strings.
- */
-function roadmapEscapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str == null ? '' : String(str);
-    return div.innerHTML;
-}
-
 class AppDetail {
     constructor() {
         this.roadmapEnabled = (document.querySelector('meta[name="roadmap-enabled"]')?.content || '').toLowerCase() === 'true';
@@ -306,8 +297,9 @@ class AppDetail {
         const statuses = window.RoadmapStore.listStatuses();
         const currentStatusId = window.RoadmapStore.getStatus(appId);
         const currentStatus = statuses.find((status) => status.id === currentStatusId);
-        const currentLabel = roadmapEscapeHtml(currentStatus ? currentStatus.label : 'Unassigned');
-        const options = statuses.map((status) => `<button type="button" class="roadmap-menu-item w-full text-left px-3 py-2 text-xs hover:bg-surface-alt text-text-muted" data-status-id="${status.id}">${roadmapEscapeHtml(status.label)}</button>`).join('');
+        const esc = window.AppCardHelpers.escapeHtml;
+        const currentLabel = esc(currentStatus ? currentStatus.label : 'Unassigned');
+        const options = statuses.map((status) => `<button type="button" class="roadmap-menu-item w-full text-left px-3 py-2 text-xs hover:bg-surface-alt text-text-muted" data-status-id="${status.id}">${esc(status.label)}</button>`).join('');
 
         content.innerHTML = `
             <div class="roadmap-menu-wrapper relative inline-block" data-app-id="${appId}">

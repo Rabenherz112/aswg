@@ -91,14 +91,22 @@
          * Persist normalized state.
          */
         saveState(nextState) {
+            return this.persistState(nextState);
+        }
+
+        /**
+         * Persist normalized state with optional timestamp/event behavior.
+         */
+        persistState(nextState, options) {
+            const cfg = options || {};
             const normalized = this.normalizeState(nextState);
-            normalized.updated_at = new Date().toISOString();
+            if (cfg.touchUpdatedAt !== false) normalized.updated_at = new Date().toISOString();
             if (this.storageAvailable) {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
             } else {
                 this.memoryState = cloneJson(normalized);
             }
-            this.notifyChange();
+            if (cfg.notify !== false) this.notifyChange();
             return normalized;
         }
 
@@ -163,12 +171,25 @@
          * Initialize roadmap state if it is missing.
          */
         ensureInitialized() {
-            const current = this.storageAvailable ? localStorage.getItem(STORAGE_KEY) : this.memoryState;
-            if (current) {
-                this.saveState(this.getState());
+            const raw = this.storageAvailable ? localStorage.getItem(STORAGE_KEY) : this.memoryState;
+            if (!raw) {
+                this.persistState(this.defaultState(), { touchUpdatedAt: false, notify: false });
                 return;
             }
-            this.saveState(this.defaultState());
+
+            try {
+                const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                const normalized = this.normalizeState(parsed);
+                if (JSON.stringify(parsed) === JSON.stringify(normalized)) return;
+                if (this.storageAvailable) {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+                } else {
+                    this.memoryState = cloneJson(normalized);
+                }
+            } catch (error) {
+                console.warn('[roadmap] invalid state found during init, resetting');
+                this.persistState(this.defaultState(), { touchUpdatedAt: false, notify: false });
+            }
         }
 
         /**
@@ -338,11 +359,6 @@
         }
 
         /**
-         * Sync roadmap items with the current catalog: drop missing apps or record them as removed.
-         * @param {Array<{id: string}>} apps App list from search.json
-         * @param {{ trackRemoved?: boolean }} options If trackRemoved is false, missing apps are deleted silently and removed_items is cleared.
-         */
-        /**
          * Remove one catalog-removal alert entry without touching assignments.
          */
         clearRemovedItem(appId) {
@@ -352,6 +368,11 @@
             return this.saveState(state);
         }
 
+        /**
+         * Sync roadmap items with the current catalog: drop missing apps or record them as removed.
+         * @param {Array<{id: string}>} apps App list from search.json
+         * @param {{ trackRemoved?: boolean }} options If trackRemoved is false, missing apps are deleted silently and removed_items is cleared.
+         */
         reconcileAgainstCatalog(apps, options) {
             const state = this.getState();
             const catalogById = {};

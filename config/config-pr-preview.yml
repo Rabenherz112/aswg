@@ -225,7 +225,7 @@ alternatives:
 # ROADMAP PAGE CONFIGURATION
 # =============================================================================
 roadmap:
-  enabled: true
+  enabled: false
   removed_from_catalog_alerts: true # Apps that disappear from the catalog are listed under "Removed From Catalog"
 
 # =============================================================================

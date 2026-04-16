@@ -134,8 +134,8 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
         self._generate_browse_page(applications, categories)
         self._generate_statistics_page(applications, categories, statistics)
         self._generate_app_detail_pages(applications)
-        if self.config.get("roadmap.enabled", True):
-            self._generate_roadmap_page(applications)
+        if self.config.get("roadmap.enabled", False):
+            self._generate_roadmap_page()
 
         # Generate alternatives page
         if self.config.get("alternatives.enabled", False):
@@ -421,12 +421,11 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
 
         print("  Statistics page generated")
 
-    def _generate_roadmap_page(self, applications: List[Application]):
+    def _generate_roadmap_page(self):
         """Generate the roadmap page."""
         template = self.jinja_env.get_template("pages/roadmap.html")
 
         content = template.render(
-            total_applications=len(applications),
             page_title="My Roadmap",
         )
 
@@ -569,7 +568,7 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
             {"loc": base_path + "/statistics.html", "lastmod": current_date, "priority": "0.7"},  # Statistics page
         ]
 
-        if self.config.get("roadmap.enabled", True):
+        if self.config.get("roadmap.enabled", False):
             urls.append({"loc": base_path + "/roadmap.html", "lastmod": current_date, "priority": "0.6"})
 
         # Add alternatives page if enabled
