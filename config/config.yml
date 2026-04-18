@@ -217,6 +217,10 @@ pages:
     title: "Alternative Software"
     description: "Find selfhosted alternatives to popular software"
 
+  roadmap:
+    title: "My Roadmap"
+    description: "Plan and track your selfhosted application journey"
+
   home:
     meta_title: "Discover Selfhosted Applications"
     meta_description: "Find the perfect selfhosted applications for your needs"

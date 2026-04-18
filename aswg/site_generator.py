@@ -424,9 +424,11 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
     def _generate_roadmap_page(self):
         """Generate the roadmap page."""
         template = self.jinja_env.get_template("pages/roadmap.html")
+        roadmap_title = self.config.get("pages.roadmap.title", "My Roadmap")
 
         content = template.render(
-            page_title="My Roadmap",
+            page_title=roadmap_title,
+            roadmap_title=roadmap_title,
         )
 
         content = self._minify_html_if_enabled(content)
@@ -569,7 +571,8 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
         ]
 
         if self.config.get("roadmap.enabled", False):
-            urls.append({"loc": base_path + "/roadmap.html", "lastmod": current_date, "priority": "0.6"})
+            # Roadmap is a first-class interactive workflow, so keep priority aligned with alternatives.
+            urls.append({"loc": base_path + "/roadmap.html", "lastmod": current_date, "priority": "0.8"})
 
         # Add alternatives page if enabled
         if self.config.get("alternatives.enabled", False):

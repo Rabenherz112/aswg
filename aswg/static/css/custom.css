@@ -1319,19 +1319,15 @@ body.mobile-drawer-open {
 }
 
 /* Mobile touch fallback controls: show only on touch devices */
-.roadmap-mobile-move {
-    display: none !important;
+.roadmap-kanban-lane .roadmap-mobile-move {
+    display: none;
 }
 
 @media (pointer: coarse) {
-    .roadmap-mobile-move {
-        display: block !important;
+    .roadmap-kanban-lane .roadmap-mobile-move {
+        display: inline-flex;
     }
-    .lane-move-left-btn.roadmap-mobile-move,
-    .lane-move-right-btn.roadmap-mobile-move {
-        display: inline-flex !important;
-    }
-    .lane-drag-handle {
-        display: none !important;
+    .roadmap-kanban-lane .lane-drag-handle {
+        display: none;
     }
 }
