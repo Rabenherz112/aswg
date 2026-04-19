@@ -544,8 +544,8 @@ class AlternativesPage {
         const card = document.createElement('div');
         card.className = 'app-card bg-surface rounded-lg border border-border shadow-sm overflow-hidden h-full flex flex-col';
 
-        const openExternalInNewTab = document.querySelector('meta[name="open-external-new-tab"]')?.content === 'true' || false;
-        const openInternalInNewTab = document.querySelector('meta[name="open-internal-new-tab"]')?.content === 'true' || false;
+        const openExternalInNewTab = (document.querySelector('meta[name="open-external-new-tab"]')?.content || '').toLowerCase() === 'true';
+        const openInternalInNewTab = (document.querySelector('meta[name="open-internal-new-tab"]')?.content || '').toLowerCase() === 'true';
 
         // Helper for link target attributes
         const getLinkAttrs = (url, isInternal = null) => {
