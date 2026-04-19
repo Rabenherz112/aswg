@@ -1449,8 +1449,8 @@ class BrowsePage {
         const card = window.renderAppCard({
             app: app,
             basePath: this.basePath,
-            openExternalInNewTab: document.querySelector('meta[name="open-external-new-tab"]')?.content === 'true' || false,
-            openInternalInNewTab: document.querySelector('meta[name="open-internal-new-tab"]')?.content === 'true' || false,
+            openExternalInNewTab: (document.querySelector('meta[name="open-external-new-tab"]')?.content || '').toLowerCase() === 'true',
+            openInternalInNewTab: (document.querySelector('meta[name="open-internal-new-tab"]')?.content || '').toLowerCase() === 'true',
             formatStars: this.formatStars.bind(this),
             getDaysSinceUpdate: this.getDaysSinceUpdate.bind(this),
             getUpdateAgeColor: this.getUpdateAgeColor.bind(this),

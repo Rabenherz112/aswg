@@ -164,7 +164,7 @@
                     ${iconHtml}
                     <div class="flex-1 min-w-0">
                         <h3 class="text-base font-semibold text-text truncate leading-tight">
-                            <a href="${detailsUrl}" class="hover:text-link">${app.name}</a>
+                            <a href="${detailsUrl}"${getLinkAttrs(detailsUrl, true, openInternalInNewTab, openExternalInNewTab)} class="hover:text-link">${app.name}</a>
                         </h3>
                     </div>
                     ${licenseBadge}
