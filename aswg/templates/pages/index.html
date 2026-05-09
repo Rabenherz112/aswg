@@ -124,7 +124,7 @@
                         </div>
 
                         <p class="text-text-muted text-sm mb-3 flex-grow leading-relaxed">
-                            {{ truncate_description(app.description, ui_config.get('truncation', {}).get('homepage_description_length', 70)) }}
+                            {{ autolink_description_urls(truncate_description(app.description, ui_config.get('truncation', {}).get('homepage_description_length', 70))) | safe }}
                         </p>
 
                         <!-- Categories -->
@@ -191,7 +191,7 @@
                     </div>
 
                     <p class="text-sm text-text-muted mb-3 flex-grow leading-relaxed">
-                        {{ truncate_description(app.description, ui_config.get('truncation', {}).get('homepage_description_length', 70)) }}
+                        {{ autolink_description_urls(truncate_description(app.description, ui_config.get('truncation', {}).get('homepage_description_length', 70))) | safe }}
                     </p>
 
                     {% if app.last_updated %}
@@ -239,7 +239,7 @@
                     </div>
 
                     <p class="text-text-muted text-sm mb-3 flex-grow leading-relaxed">
-                        {{ truncate_description(app.description, ui_config.get('truncation', {}).get('homepage_description_length', 70)) }}
+                        {{ autolink_description_urls(truncate_description(app.description, ui_config.get('truncation', {}).get('homepage_description_length', 70))) | safe }}
                     </p>
 
                     <a href="{{ url_for(get_app_url(app.id)) }}" class="text-link hover:text-link-hover font-medium text-sm mt-auto self-start">

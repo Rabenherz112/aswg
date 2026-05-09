@@ -268,7 +268,7 @@
                 </div>
                 
                 <p class="text-text-muted text-sm mb-2 leading-relaxed">
-                    {{ truncate_description(related_app.description, ui_config.get('truncation', {}).get('related_apps_description_length', 100)) }}
+                    {{ autolink_description_urls(truncate_description(related_app.description, ui_config.get('truncation', {}).get('related_apps_description_length', 100))) | safe }}
                 </p>
                 
                 {% if related_app.categories %}

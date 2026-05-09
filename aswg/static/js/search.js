@@ -121,7 +121,7 @@
             <div class="search-result-item">
                 <a href="${basePath}/apps/${app.id}.html" class="block">
                     <div class="font-medium text-text">${highlightMatch(app.name, query)}</div>
-                    <div class="text-sm text-text-muted truncate">${highlightMatch(app.description.substring(0, 100), query)}...</div>
+                    <div class="text-sm text-text-muted truncate">${highlightMatch((window.AppCardHelpers ? window.AppCardHelpers.stripMarkdownLinks(app.description) : app.description).substring(0, 100), query)}...</div>
                     ${app.stars ? `<div class="text-xs text-star mt-1">⭐ ${formatStars(app.stars)}</div>` : ''}
                 </a>
             </div>

@@ -157,6 +157,7 @@
         const categoriesHtml = buildCategoriesHtml(app, config);
         const platformsHtml = buildPlatformsHtml(app, config);
         const linksHtml = buildLinksHtml(app, config, detailsUrl, openInternalInNewTab, openExternalInNewTab);
+        const descriptionHtml = window.AppCardHelpers.linkifyDescription(config.truncateDescription(app.description), openExternalInNewTab);
 
         card.innerHTML = `
             <div class="p-4 flex flex-col flex-grow">
@@ -175,7 +176,7 @@
                 </div>
 
                 <p class="text-sm text-text-muted mb-3 flex-grow leading-relaxed">
-                    ${config.truncateDescription(app.description)}
+                    ${descriptionHtml}
                 </p>
 
                 ${categoriesHtml ? `<div class="flex flex-wrap gap-1 mb-1.5">${categoriesHtml}</div>` : ''}
@@ -267,6 +268,50 @@
             const div = document.createElement('div');
             div.textContent = str;
             return div.innerHTML;
+        },
+
+        stripMarkdownLinks(description) {
+            if (!description) return '';
+            return description.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1');
+        },
+
+        linkifyDescription(description, openExternalInNewTab) {
+            if (!description) return '';
+            const pattern = /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)|https?:\/\/[^\s<>\"]+/g;
+            const parts = [];
+            let lastEnd = 0;
+            let match;
+            while ((match = pattern.exec(description)) !== null) {
+                const markdownLabel = match[1];
+                const markdownUrl = match[2];
+                const rawUrl = markdownUrl || match[0];
+                let url = rawUrl;
+                let trailing = '';
+                while (url && '.,;:!?)]'.includes(url[url.length - 1])) {
+                    if (url[url.length - 1] === ')' && (url.match(/\(/g) || []).length >= (url.match(/\)/g) || []).length) break;
+                    trailing = url[url.length - 1] + trailing;
+                    url = url.slice(0, -1);
+                }
+                let isValid = false;
+                try {
+                    const parsed = new URL(url);
+                    isValid = parsed.protocol === 'http:' || parsed.protocol === 'https:';
+                } catch (error) {
+                    isValid = false;
+                }
+                parts.push(this.escapeHtml(description.slice(lastEnd, match.index)));
+                if (isValid) {
+                    const attrs = getLinkAttrs(url, false, false, !!openExternalInNewTab);
+                    const text = markdownLabel ? this.escapeHtml(markdownLabel) : this.escapeHtml(url);
+                    parts.push(`<a href="${this.escapeHtml(url)}"${attrs} class="text-link hover:text-link-hover underline font-medium">${text}</a>`);
+                    if (!markdownLabel) parts.push(this.escapeHtml(trailing));
+                } else {
+                    parts.push(this.escapeHtml(match[0]));
+                }
+                lastEnd = match.index + match[0].length;
+            }
+            parts.push(this.escapeHtml(description.slice(lastEnd)));
+            return parts.join('');
         }
     };
 })();

@@ -104,7 +104,9 @@ class TemplateHelpers:  # pylint: disable=too-many-public-methods
         if show_full or len(description) <= length:
             return description
 
-        truncated = description[:length]
+        # Avoid leaking broken markdown fragments (e.g. "[Label](https://...") in previews.
+        preview_text = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r"\1", description)
+        truncated = preview_text[:length]
         last_space = truncated.rfind(" ")
 
         if last_space > 0:
