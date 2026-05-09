@@ -34,23 +34,6 @@
     }
   },
   {
-    "number": 77,
-    "title": "build(deps-dev): update setuptools requirement from >=77.0.3 to >=82.0.1",
-    "author": "dependabot[bot]",
-    "branch": "dependabot/pip/setuptools-gte-82.0.1",
-    "commit": "76acdf6",
-    "commit_full": "76acdf6164e028666ac0459a3dd78a3d8f9c171d",
-    "url": "pr-77/",
-    "pr_url": "https://github.com/Rabenherz112/aswg/pull/77",
-    "updated": "2026-04-13T01:47:44+00:00",
-    "build": {
-      "duration": "30s",
-      "total_files": "1330",
-      "html_pages": "1315",
-      "size": "33M"
-    }
-  },
-  {
     "number": 76,
     "title": "build(deps): update beautifulsoup4 requirement from >=4.13.4 to >=4.14.3",
     "author": "dependabot[bot]",
