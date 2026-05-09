@@ -411,5 +411,9 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ asset_url('static/js/app-cards.js') }}"></script>
+{% if roadmap_config.get('enabled', false) %}
+<script src="{{ asset_url('static/js/roadmap-store.js') }}"></script>
+{% endif %}
 <script src="{{ asset_url('static/js/browse.js') }}"></script>
-{% endblock %} 
+{% endblock %}

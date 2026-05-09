@@ -1,0 +1,55 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+<div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-5 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
+        <div>
+            <h1 class="text-3xl sm:text-4xl font-bold text-text mb-1">{{ roadmap_title or page_title or "My Roadmap" }}</h1>
+            <p class="text-sm sm:text-base text-text-muted">Drag cards between lanes, drag lane handles to reorder, click lane names to rename, and use + Add Lane (max 6).</p>
+        </div>
+        <div class="flex flex-col items-stretch sm:items-end gap-2 w-full lg:w-auto">
+            <div class="flex flex-wrap items-center gap-2">
+                <button type="button" id="roadmap-share-button" class="bg-primary hover:bg-primary-hover text-surface text-xs font-medium px-3 py-2 rounded-md transition-colors">Share Link</button>
+                <button type="button" id="roadmap-export-button" class="bg-surface-alt border border-border hover:bg-secondary text-text text-xs font-medium px-3 py-2 rounded-md transition-colors">Export JSON</button>
+                <label for="roadmap-import-input" class="inline-flex items-center justify-center bg-surface-alt border border-border hover:bg-secondary text-text text-xs font-medium px-3 py-2 rounded-md transition-colors cursor-pointer">Import JSON</label>
+                <input id="roadmap-import-input" type="file" accept="application/json" class="hidden">
+            </div>
+            <div id="roadmap-share-fallback-host" class="hidden w-full max-w-full sm:max-w-xl"></div>
+        </div>
+    </div>
+
+    <div id="roadmap-share-banner" class="bg-primary/10 border border-primary/30 rounded-lg p-4 mb-6 hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p class="text-sm text-text font-medium">You're viewing a shared roadmap.</p>
+            <div class="flex items-center gap-2">
+                <button id="roadmap-share-replace" class="bg-primary hover:bg-primary-hover text-surface text-xs font-medium px-3 py-2 rounded-md transition-colors">Replace Mine</button>
+                <button id="roadmap-share-merge" class="bg-surface-alt border border-border hover:bg-secondary text-text text-xs font-medium px-3 py-2 rounded-md transition-colors">Merge With Mine</button>
+                <button id="roadmap-share-dismiss" class="bg-surface-alt border border-border hover:bg-secondary text-text text-xs font-medium px-3 py-2 rounded-md transition-colors">Dismiss</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="roadmap-removed-section" class="bg-surface rounded-lg border border-border shadow-sm p-5 mb-6 hidden">
+        <h2 class="text-lg font-semibold text-text mb-3">Removed From Catalog</h2>
+        <div id="roadmap-removed-items" class="space-y-2"></div>
+    </div>
+
+    <div class="bg-surface rounded-lg border border-border shadow-sm p-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+            <div id="roadmap-status-counts" class="flex flex-wrap gap-2">
+                <span class="text-text-muted text-sm">Loading counts...</span>
+            </div>
+            <span id="roadmap-total-items" class="text-xs text-text-muted"></span>
+        </div>
+        <div id="roadmap-kanban-board" class="roadmap-kanban-board flex gap-4 overflow-x-auto pb-2">
+            <div class="text-text-muted text-sm">Loading board...</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ asset_url('static/js/app-cards.js') }}"></script>
+<script src="{{ asset_url('static/js/roadmap-store.js') }}"></script>
+<script src="{{ asset_url('static/js/roadmap.js') }}"></script>
+{% endblock %}

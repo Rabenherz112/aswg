@@ -1264,3 +1264,70 @@ body.mobile-drawer-open {
     color: var(--color-text-muted);
     margin-top: 0.125rem;
 }
+
+/* =============================================================================
+   ROADMAP COMPONENTS
+   ============================================================================= */
+
+.roadmap-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-alt);
+    color: var(--color-text);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.roadmap-kanban-board {
+    scrollbar-width: thin;
+    align-items: stretch;
+}
+
+.roadmap-kanban-lane {
+    min-height: 240px;
+}
+
+.roadmap-menu-wrapper .roadmap-menu-item[data-selected="true"] {
+    background: var(--color-surface-alt);
+    color: var(--color-text);
+    font-weight: 600;
+}
+
+.status-move-up:disabled,
+.status-move-down:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.roadmap-lane-cards-drop-target {
+    outline: 2px dashed var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 8px;
+}
+
+.roadmap-lane-drop-target {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.roadmap-kanban-lane-add:hover {
+    border-color: var(--color-primary);
+}
+
+/* Mobile touch fallback controls: show only on touch devices */
+.roadmap-kanban-lane .roadmap-mobile-move {
+    display: none;
+}
+
+@media (pointer: coarse) {
+    .roadmap-kanban-lane .roadmap-mobile-move {
+        display: inline-flex;
+    }
+    .roadmap-kanban-lane .lane-drag-handle {
+        display: none;
+    }
+}

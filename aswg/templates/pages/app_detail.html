@@ -1,7 +1,7 @@
 {% extends "base/base.html" %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-app-id="{{ app.id }}">
     <!-- Breadcrumb -->
     <div class="flex items-center text-xs sm:text-sm text-text-muted mb-4 sm:mb-6 overflow-x-auto whitespace-nowrap">
         <a href="{{ url_for('/') }}" class="hover:text-link transition-colors">Home</a>
@@ -78,6 +78,11 @@
                 Source Code
             </a>
             {% endif %}
+        </div>
+
+        <div id="roadmap-detail-controls" class="mb-5 hidden">
+            <h3 class="text-xs font-semibold text-text uppercase tracking-wider mb-2">My Roadmap</h3>
+            <div id="roadmap-detail-controls-content"></div>
         </div>
 
         <!-- Description -->
@@ -294,5 +299,9 @@
 {% endblock %}
 
 {% block extra_js %}
+{% if roadmap_config.get('enabled', false) %}
+<script src="{{ asset_url('static/js/app-cards.js') }}"></script>
+<script src="{{ asset_url('static/js/roadmap-store.js') }}"></script>
+{% endif %}
 <script src="{{ asset_url('static/js/app-detail.js') }}"></script>
 {% endblock %}

@@ -56,6 +56,7 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
                 "hero_config": self.config.get("hero", {}),
                 "navigation_config": self.config.get("navigation", {}),
                 "pages_config": self.config.get("pages", {}),
+                "roadmap_config": self.config.get("roadmap", {}),
                 "links_config": self.config.get("links", {}),
                 "robots_config": self.config.get("robots", {}),
                 "related_apps_config": self.config.get("related_apps", {}),
@@ -133,6 +134,8 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
         self._generate_browse_page(applications, categories)
         self._generate_statistics_page(applications, categories, statistics)
         self._generate_app_detail_pages(applications)
+        if self.config.get("roadmap.enabled", False):
+            self._generate_roadmap_page()
 
         # Generate alternatives page
         if self.config.get("alternatives.enabled", False):
@@ -418,6 +421,23 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
 
         print("  Statistics page generated")
 
+    def _generate_roadmap_page(self):
+        """Generate the roadmap page."""
+        template = self.jinja_env.get_template("pages/roadmap.html")
+        roadmap_title = self.config.get("pages.roadmap.title", "My Roadmap")
+
+        content = template.render(
+            page_title=roadmap_title,
+            roadmap_title=roadmap_title,
+        )
+
+        content = self._minify_html_if_enabled(content)
+        output_path = self.config.output_dir / "roadmap.html"
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(content)
+
+        print("  Roadmap page generated")
+
     def _generate_app_detail_pages(self, applications: List[Application]):
         """Generate individual application detail pages."""
         template = self.jinja_env.get_template("pages/app_detail.html")
@@ -549,6 +569,10 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
             {"loc": base_path + "/browse.html", "lastmod": current_date, "priority": "0.9"},  # Browse page
             {"loc": base_path + "/statistics.html", "lastmod": current_date, "priority": "0.7"},  # Statistics page
         ]
+
+        if self.config.get("roadmap.enabled", False):
+            # Roadmap is a first-class interactive workflow, so keep priority aligned with alternatives.
+            urls.append({"loc": base_path + "/roadmap.html", "lastmod": current_date, "priority": "0.8"})
 
         # Add alternatives page if enabled
         if self.config.get("alternatives.enabled", False):

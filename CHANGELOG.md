@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [unreleased]
 
+### Additions
+
+- Added Roadmap functionality with Kanban board and ability to share roadmap
+
 ### Bug Fixes
 
 - Fixed link in App detail page, to return to browse page

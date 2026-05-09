@@ -1,11 +1,15 @@
 // App detail page functionality
 class AppDetail {
     constructor() {
+        this.roadmapEnabled = (document.querySelector('meta[name="roadmap-enabled"]')?.content || '').toLowerCase() === 'true';
+        this.roadmapOutsideClickBound = false;
         this.init();
     }
 
     init() {
         this.renderCommitGraph();
+        this.renderRoadmapControls();
+        this.setupRoadmapSync();
     }
 
     renderCommitGraph() {
@@ -279,6 +283,92 @@ class AppDetail {
         } catch (error) {
             return monthStr;
         }
+    }
+
+    renderRoadmapControls() {
+        if (!this.roadmapEnabled || !window.RoadmapStore) return;
+
+        const controls = document.getElementById('roadmap-detail-controls');
+        const content = document.getElementById('roadmap-detail-controls-content');
+        const appContainer = document.querySelector('[data-app-id]');
+        const appId = appContainer ? appContainer.getAttribute('data-app-id') : null;
+        if (!controls || !content || !appId) return;
+
+        const statuses = window.RoadmapStore.listStatuses();
+        const currentStatusId = window.RoadmapStore.getStatus(appId);
+        const currentStatus = statuses.find((status) => status.id === currentStatusId);
+        const esc = window.AppCardHelpers.escapeHtml;
+        const currentLabel = esc(currentStatus ? currentStatus.label : 'Unassigned');
+        const options = statuses.map((status) => `<button type="button" class="roadmap-menu-item w-full text-left px-3 py-2 text-xs hover:bg-surface-alt text-text-muted" data-status-id="${status.id}">${esc(status.label)}</button>`).join('');
+
+        content.innerHTML = `
+            <div class="roadmap-menu-wrapper relative inline-block" data-app-id="${appId}">
+                <button type="button" class="roadmap-toggle-btn inline-flex items-center px-3 py-2 rounded border border-border text-sm font-medium text-text-muted hover:text-link hover:border-link transition-colors">
+                    Roadmap: <span class="ml-1 text-text">${currentLabel}</span>
+                    <svg class="w-3 h-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                <div class="roadmap-menu hidden absolute left-0 mt-1 w-44 bg-surface border border-border rounded-md shadow-lg z-20">
+                    ${options}
+                    <div class="border-t border-border my-0.5"></div>
+                    <button type="button" class="roadmap-menu-clear w-full text-left px-3 py-2 text-xs hover:bg-surface-alt text-text-muted">Clear status</button>
+                </div>
+                <a href="${this.getBasePath()}/roadmap.html" class="ml-2 inline-flex items-center text-sm text-link hover:text-link-hover">View My Roadmap</a>
+            </div>
+        `;
+        controls.classList.remove('hidden');
+        this.bindRoadmapMenu(content, appId);
+    }
+
+    bindRoadmapMenu(container, appId) {
+        const toggleBtn = container.querySelector('.roadmap-toggle-btn');
+        const menu = container.querySelector('.roadmap-menu');
+        if (toggleBtn && menu) {
+            toggleBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                menu.classList.toggle('hidden');
+            });
+        }
+
+        container.querySelectorAll('.roadmap-menu-item').forEach((button) => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                const statusId = event.currentTarget.getAttribute('data-status-id');
+                if (statusId) window.RoadmapStore.setStatus(appId, statusId);
+                this.renderRoadmapControls();
+            });
+        });
+
+        const clearButton = container.querySelector('.roadmap-menu-clear');
+        if (clearButton) {
+            clearButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                window.RoadmapStore.clearStatus(appId);
+                this.renderRoadmapControls();
+            });
+        }
+
+        if (!this.roadmapOutsideClickBound) {
+            document.addEventListener('click', (event) => {
+                if (!event.target.closest('.roadmap-menu-wrapper')) {
+                    document.querySelectorAll('.roadmap-menu').forEach((menuEl) => menuEl.classList.add('hidden'));
+                }
+            });
+            this.roadmapOutsideClickBound = true;
+        }
+    }
+
+    setupRoadmapSync() {
+        if (!this.roadmapEnabled || !window.RoadmapStoreConstants) return;
+        window.addEventListener(window.RoadmapStoreConstants.EVENT_NAME, () => {
+            this.renderRoadmapControls();
+        });
+    }
+
+    getBasePath() {
+        return document.querySelector('meta[name="base-path"]')?.content || '';
     }
 }
 

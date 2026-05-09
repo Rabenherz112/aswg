@@ -11,8 +11,8 @@
     <meta name="items-per-page" content="{{ items_per_page|default(24) }}">
     <meta name="enable-pagination" content="{{ generation_config.get('enable_pagination', true) }}">
     <meta name="let-user-choose-pagination-size" content="{{ generation_config.get('let_user_choose_pagination_size', false) }}">
-    <meta name="open-external-new-tab" content="{{ links_config.get('open_in_new_tab_for_external_links', false) }}">
-    <meta name="open-internal-new-tab" content="{{ links_config.get('open_in_new_tab_for_internal_links', false) }}">
+    <meta name="open-external-new-tab" content="{{ 'true' if links_config.get('open_in_new_tab_for_external_links', false) else 'false' }}">
+    <meta name="open-internal-new-tab" content="{{ 'true' if links_config.get('open_in_new_tab_for_internal_links', false) else 'false' }}">
     <meta name="browse-description-length" content="{{ ui_config.get('truncation', {}).get('browse_description_length', 80) }}">
     <meta name="browse-description-full" content="{{ ui_config.get('truncation', {}).get('browse_description_full', false) }}">
     <meta name="search-min-query-length" content="{{ search_config.get('min_query_length', 3) }}">
@@ -23,6 +23,8 @@
     <meta name="lazy-load-images" content="{{ performance_config.get('lazy_load_images', true) }}">
     <meta name="show-project-icons" content="{{ ui_config.get('show_project_icons', true) }}">
     <meta name="base-path" content="{{ base_path }}">
+    <meta name="roadmap-enabled" content="{{ roadmap_config.get('enabled', false) }}">
+    <meta name="roadmap-removed-catalog-alerts" content="{{ 'true' if roadmap_config.get('removed_from_catalog_alerts', true) else 'false' }}">
     {% if alternatives_config %}
     <meta name="alternatives-show-more-threshold" content="{{ alternatives_config.get('show_more_threshold', 3) }}">
     <meta name="alternatives-description-length" content="{{ ui_config.get('truncation', {}).get('alternatives_description_length', 90) }}">
@@ -243,7 +245,6 @@
     <script src="{{ asset_url('static/js/theme.js') }}"></script>
     <script src="{{ asset_url('static/js/search.js') }}"></script>
     <script src="{{ asset_url('static/js/app.js') }}"></script>
-
     {% block extra_js %}{% endblock %}
 </body>
 </html>
