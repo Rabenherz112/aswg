@@ -342,7 +342,7 @@ class TemplateHelpers:  # pylint: disable=too-many-public-methods
         if not markdown_text:
             return ""
 
-        html = markdown_text
+        processed_text = markdown_text
 
         # Get footer configuration for section filtering
         footer_config = self.config.get("ui.footer_markdown", {})
@@ -353,23 +353,23 @@ class TemplateHelpers:  # pylint: disable=too-many-public-methods
             for section in excluded_sections:
                 # Remove section by header (case-insensitive)
                 section_pattern = rf"^#+\s+{re.escape(section)}.*?(?=^#+|\Z)"
-                html = re.sub(
+                processed_text = re.sub(
                     section_pattern,
                     "",
-                    html,
+                    processed_text,
                     flags=re.MULTILINE | re.DOTALL | re.IGNORECASE,
                 )
 
         # Remove horizontal rules (---- patterns)
-        html = re.sub(r"^-{4,}\s*$", "", html, flags=re.MULTILINE)
-        html = re.sub(r"^={4,}\s*$", "", html, flags=re.MULTILINE)
+        processed_text = re.sub(r"^-{4,}\s*$", "", processed_text, flags=re.MULTILINE)
+        processed_text = re.sub(r"^={4,}\s*$", "", processed_text, flags=re.MULTILINE)
 
         # Remove relative links like [](#awesome-selfhosted) and empty links
-        html = re.sub(r"\*\*\[[^\]]*\]\(#[^)]+\)\*\*", "", html)
-        html = re.sub(r"\[[^\]]*\]\(#[^)]+\)", "", html)
+        processed_text = re.sub(r"\*\*\[[^\]]*\]\(#[^)]+\)\*\*", "", processed_text)
+        processed_text = re.sub(r"\[[^\]]*\]\(#[^)]+\)", "", processed_text)
 
         # Remove code blocks (backticks)
-        html = re.sub(r"`[^`]*?`", "", html)
+        processed_text = re.sub(r"`[^`]*?`", "", processed_text)
 
         # Convert links: [text](url) - use proper link target configuration
         def replace_link(match):
@@ -386,21 +386,21 @@ class TemplateHelpers:  # pylint: disable=too-many-public-methods
             target_attrs = self.get_link_target_attrs(url, is_internal)
             return f'<a href="{url}"{target_attrs} class="text-link hover:text-link-hover underline">{text}</a>'
 
-        html = re.sub(
-            r"\[([^\]]+)\]\(([^)]+)\)", replace_link, html, flags=re.MULTILINE
+        processed_text = re.sub(
+            r"\[([^\]]+)\]\(([^)]+)\)", replace_link, processed_text, flags=re.MULTILINE
         )
 
         # Convert headers (## and ### only)
-        html = re.sub(
+        processed_text = re.sub(
             r"^### (.+)$",
             r'<h3 class="text-2xl font-bold text-text mb-4 mt-8 text-center">\1</h3>',
-            html,
+            processed_text,
             flags=re.MULTILINE,
         )
-        html = re.sub(
+        processed_text = re.sub(
             r"^## (.+)$",
             r'<h2 class="text-3xl font-bold text-text mb-4 text-center">\1</h2>',
-            html,
+            processed_text,
             flags=re.MULTILINE,
         )
 
@@ -412,10 +412,10 @@ class TemplateHelpers:  # pylint: disable=too-many-public-methods
                 return match.group(0)  # Return unchanged
             return f'<strong class="font-semibold">{content}</strong>'
 
-        html = re.sub(r"\*\*([^*]+)\*\*", replace_bold, html)
+        processed_text = re.sub(r"\*\*([^*]+)\*\*", replace_bold, processed_text)
 
         # Split into paragraphs and process
-        paragraphs = html.split("\n\n")
+        paragraphs = processed_text.split("\n\n")
         html_paragraphs = []
 
         for paragraph in paragraphs:
@@ -469,13 +469,13 @@ class TemplateHelpers:  # pylint: disable=too-many-public-methods
                         )
 
         # Join all paragraphs
-        html = "\n\n".join(html_paragraphs)
+        processed_text = "\n\n".join(html_paragraphs)
 
         # Clean up any extra whitespace left from removed sections
-        html = re.sub(r"\n{3,}", "\n\n", html)
-        html = html.strip()
+        processed_text = re.sub(r"\n{3,}", "\n\n", processed_text)
+        processed_text = processed_text.strip()
 
-        return html
+        return processed_text
 
     def style_description_links(self, description: str) -> str:
         """Add proper styling to links in description text."""
@@ -512,12 +512,14 @@ class TemplateHelpers:  # pylint: disable=too-many-public-methods
         """Convert plain HTTP(S) URLs in description text into safe anchor tags."""
         if not description:
             return ""
-        pattern = re.compile(r"https?://[^\s<>\"]+")
+        pattern = re.compile(r"\[([^\]]+)\]\((https?://[^)\s]+)\)|https?://[^\s<>\"]+")
         parts = []
         last_end = 0
         for match in pattern.finditer(description):
             start, end = match.span()
-            raw_url = match.group(0)
+            markdown_label = match.group(1)
+            markdown_url = match.group(2)
+            raw_url = markdown_url if markdown_url else match.group(0)
             url = raw_url
             trailing = ""
             while url and url[-1] in ".,;:!?)]":
@@ -532,12 +534,13 @@ class TemplateHelpers:  # pylint: disable=too-many-public-methods
             parts.append(html.escape(description[last_end:start]))
             if is_valid_url:
                 href = html.escape(url, quote=True)
-                text = html.escape(url)
+                text = html.escape(markdown_label) if markdown_label else html.escape(url)
                 attrs = self.get_link_target_attrs(url, False)
                 parts.append(f'<a href="{href}"{attrs} class="text-link hover:text-link-hover underline font-medium">{text}</a>')
-                parts.append(html.escape(trailing))
+                if not markdown_label:
+                    parts.append(html.escape(trailing))
             else:
-                parts.append(html.escape(raw_url))
+                parts.append(html.escape(match.group(0)))
             last_end = end
         parts.append(html.escape(description[last_end:]))
         return "".join(parts)
