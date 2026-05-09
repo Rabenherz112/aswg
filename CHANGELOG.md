@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file. The format 
 ### Bug Fixes
 
 - Fixed link in App detail page, to return to browse page
+- Fixed open-external-new-tab and open-internal-new-tab meta tags to be case-insensitive
 
 ## [2.2.0] - 2026-03-08
 
