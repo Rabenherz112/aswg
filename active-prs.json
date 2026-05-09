@@ -17,23 +17,6 @@
     }
   },
   {
-    "number": 79,
-    "title": "build(deps-dev): update black requirement from >=23.0.0 to >=26.3.1",
-    "author": "dependabot[bot]",
-    "branch": "dependabot/pip/black-gte-26.3.1",
-    "commit": "0a71a8b",
-    "commit_full": "0a71a8b86b5b65a964c306b3d9377f0ded95f17f",
-    "url": "pr-79/",
-    "pr_url": "https://github.com/Rabenherz112/aswg/pull/79",
-    "updated": "2026-04-13T01:47:48+00:00",
-    "build": {
-      "duration": "30s",
-      "total_files": "1330",
-      "html_pages": "1315",
-      "size": "33M"
-    }
-  },
-  {
     "number": 78,
     "title": "build(deps-dev): update ruff requirement from >=0.1.0 to >=0.15.10",
     "author": "dependabot[bot]",
