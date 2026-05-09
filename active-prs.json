@@ -1,5 +1,22 @@
 [
   {
+    "number": 80,
+    "title": "feat: add link support for description in details",
+    "author": "Rabenherz112",
+    "branch": "feat-link-description",
+    "commit": "0009c04",
+    "commit_full": "0009c043e456f34dd51184df2fa93974abbd5b4e",
+    "url": "pr-80/",
+    "pr_url": "https://github.com/Rabenherz112/aswg/pull/80",
+    "updated": "2026-05-09T14:02:35+00:00",
+    "build": {
+      "duration": "29s",
+      "total_files": "1334",
+      "html_pages": "1316",
+      "size": "35M"
+    }
+  },
+  {
     "number": 79,
     "title": "build(deps-dev): update black requirement from >=23.0.0 to >=26.3.1",
     "author": "dependabot[bot]",
