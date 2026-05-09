@@ -4,13 +4,13 @@
     "title": "feat: add link support for description in details",
     "author": "Rabenherz112",
     "branch": "feat-link-description",
-    "commit": "4cf223e",
-    "commit_full": "4cf223e64f07613cb7219e0b2e3835a49224fd34",
+    "commit": "595288f",
+    "commit_full": "595288fa6b4c9cbc927dc8906ff3ff1953c5a767",
     "url": "pr-80/",
     "pr_url": "https://github.com/Rabenherz112/aswg/pull/80",
-    "updated": "2026-05-09T14:07:35+00:00",
+    "updated": "2026-05-09T14:14:37+00:00",
     "build": {
-      "duration": "31s",
+      "duration": "30s",
       "total_files": "1334",
       "html_pages": "1316",
       "size": "35M"

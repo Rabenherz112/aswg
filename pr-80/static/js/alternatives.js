@@ -633,6 +633,8 @@ class AlternativesPage {
         const sourceLink = (app.repo_url && app.repo_url.trim()) ? `<a href="${app.repo_url}"${getLinkAttrs(app.repo_url, false)} class="text-link hover:text-link-hover font-medium">Source</a>` : '';
         const websiteLink = (app.url && app.url.trim() && app.url !== app.repo_url && app.url !== app.demo_url) ? `<a href="${app.url}"${getLinkAttrs(app.url, false)} class="text-link hover:text-link-hover font-medium">Website</a>` : '';
         const detailsLink = `<a href="${this.basePath}/apps/${app.id}.html"${getLinkAttrs(`${this.basePath}/apps/${app.id}.html`, true)} class="text-link hover:text-link-hover font-medium">Details</a>`;
+        const openExternalInNewTab = (document.querySelector('meta[name="open-external-new-tab"]')?.content || '').toLowerCase() === 'true';
+        const descriptionHtml = window.AppCardHelpers.linkifyDescription(this.truncateDescription(app.description), openExternalInNewTab);
 
         // Build indicator icons row
         const indicatorIcons = [dependsIcon, docLanguageIcon, forkIcon].filter(Boolean).join('');
@@ -654,7 +656,7 @@ class AlternativesPage {
                 </div>
 
                 <p class="text-sm text-text-muted mb-3 flex-grow leading-relaxed">
-                    ${this.truncateDescription(app.description)}
+                    ${descriptionHtml}
                 </p>
 
                 ${categoriesHtml ? `<div class="flex flex-wrap gap-1 mb-1.5">${categoriesHtml}</div>` : ''}
@@ -760,8 +762,8 @@ class AlternativesPage {
         if (this.alternativesDescriptionFull || description.length <= maxLength) {
             return description;
         }
-        
-        const truncated = description.substring(0, maxLength).trim();
+        const previewText = window.AppCardHelpers.stripMarkdownLinks(description);
+        const truncated = previewText.substring(0, maxLength).trim();
         const lastSpace = truncated.lastIndexOf(' ');
         const finalText = lastSpace > 0 ? truncated.substring(0, lastSpace) : truncated;
         

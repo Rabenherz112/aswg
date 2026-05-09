@@ -1049,7 +1049,8 @@ class RoadmapPage {
         const browseDescriptionFull = document.querySelector('meta[name="browse-description-full"]')?.content === 'true';
         if (!description) return '';
         if (browseDescriptionFull || description.length <= maxLength) return description;
-        const truncated = description.substring(0, maxLength).trim();
+        const previewText = window.AppCardHelpers.stripMarkdownLinks(description);
+        const truncated = previewText.substring(0, maxLength).trim();
         const lastSpace = truncated.lastIndexOf(' ');
         const finalText = lastSpace > 0 ? truncated.substring(0, lastSpace) : truncated;
         return finalText + '...';

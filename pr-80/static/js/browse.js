@@ -1575,8 +1575,8 @@ class BrowsePage {
         if (this.browseDescriptionFull || description.length <= maxLength) {
             return description;
         }
-        
-        const truncated = description.substring(0, maxLength).trim();
+        const previewText = window.AppCardHelpers.stripMarkdownLinks(description);
+        const truncated = previewText.substring(0, maxLength).trim();
         const lastSpace = truncated.lastIndexOf(' ');
         const finalText = lastSpace > 0 ? truncated.substring(0, lastSpace) : truncated;
         
