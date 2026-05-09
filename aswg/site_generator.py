@@ -78,6 +78,7 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
                 "get_link_target_attrs": self.template_helpers.get_link_target_attrs,
                 "markdown_to_html": self.template_helpers.markdown_to_html,
                 "style_description_links": self.template_helpers.style_description_links,
+                "autolink_description_urls": self.template_helpers.autolink_description_urls,
                 "process_banner_text": self.template_helpers.process_banner_text,
                 "base_path": self.config.get("site.base_path", "").rstrip("/"),
                 "url_for": self.template_helpers.url_for,

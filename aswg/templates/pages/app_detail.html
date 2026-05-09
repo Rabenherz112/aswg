@@ -87,7 +87,7 @@
 
         <!-- Description -->
         <div class="mb-5">
-            <p class="text-base text-text-muted leading-relaxed">{{ app.description }}</p>
+            <p class="text-base text-text-muted leading-relaxed">{{ autolink_description_urls(app.description) | safe }}</p>
         </div>
 
         <!-- Categories -->

@@ -2,9 +2,11 @@
 Template helper functions for Jinja2 templates.
 """
 
+import html
 import re
 from datetime import datetime
 from typing import List, Any
+from urllib.parse import urlparse
 from jinja2 import Template, TemplateError
 from .config import Config
 
@@ -505,6 +507,40 @@ class TemplateHelpers:  # pylint: disable=too-many-public-methods
             return full_tag
 
         return re.sub(r"<a[^>]*>.*?</a>", style_link, description)
+
+    def autolink_description_urls(self, description: str) -> str:
+        """Convert plain HTTP(S) URLs in description text into safe anchor tags."""
+        if not description:
+            return ""
+        pattern = re.compile(r"https?://[^\s<>\"]+")
+        parts = []
+        last_end = 0
+        for match in pattern.finditer(description):
+            start, end = match.span()
+            raw_url = match.group(0)
+            url = raw_url
+            trailing = ""
+            while url and url[-1] in ".,;:!?)]":
+                if url[-1] == ")" and url.count("(") >= url.count(")"):
+                    break
+                trailing = url[-1] + trailing
+                url = url[:-1]
+            is_valid_url = False
+            parsed = urlparse(url)
+            if parsed.scheme.lower() in ("http", "https") and parsed.netloc:
+                is_valid_url = True
+            parts.append(html.escape(description[last_end:start]))
+            if is_valid_url:
+                href = html.escape(url, quote=True)
+                text = html.escape(url)
+                attrs = self.get_link_target_attrs(url, False)
+                parts.append(f'<a href="{href}"{attrs} class="text-link hover:text-link-hover underline font-medium">{text}</a>')
+                parts.append(html.escape(trailing))
+            else:
+                parts.append(html.escape(raw_url))
+            last_end = end
+        parts.append(html.escape(description[last_end:]))
+        return "".join(parts)
 
     def process_banner_text(self, text: str) -> str:
         """Process banner text to handle markdown-style bold formatting."""
