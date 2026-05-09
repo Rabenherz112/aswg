@@ -15,22 +15,5 @@
       "html_pages": "1316",
       "size": "35M"
     }
-  },
-  {
-    "number": 78,
-    "title": "build(deps-dev): update ruff requirement from >=0.1.0 to >=0.15.10",
-    "author": "dependabot[bot]",
-    "branch": "dependabot/pip/ruff-gte-0.15.10",
-    "commit": "e6e6f9d",
-    "commit_full": "e6e6f9d0567a0d836168ded4be9fd9b24519120f",
-    "url": "pr-78/",
-    "pr_url": "https://github.com/Rabenherz112/aswg/pull/78",
-    "updated": "2026-04-13T06:15:12+00:00",
-    "build": {
-      "duration": "30s",
-      "total_files": "1330",
-      "html_pages": "1315",
-      "size": "33M"
-    }
   }
 ]
