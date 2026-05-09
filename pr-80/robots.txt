@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /static/
-
-Sitemap: https://rabenherz112.github.io/aswg/pr-80/sitemap.xml
