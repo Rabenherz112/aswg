@@ -83,22 +83,5 @@
       "html_pages": "1315",
       "size": "33M"
     }
-  },
-  {
-    "number": 74,
-    "title": "feat: add roadmap functionality",
-    "author": "Rabenherz112",
-    "branch": "feat-roadmap",
-    "commit": "da0359c",
-    "commit_full": "da0359c3b551c641a65ab2e9f37c738f0d7aefd3",
-    "url": "pr-74/",
-    "pr_url": "https://github.com/Rabenherz112/aswg/pull/74",
-    "updated": "2026-04-19T10:44:16+00:00",
-    "build": {
-      "duration": "30s",
-      "total_files": "1332",
-      "html_pages": "1314",
-      "size": "35M"
-    }
   }
 ]
