@@ -25,7 +25,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
             <div class="text-center">
                 <h1 class="text-4xl md:text-6xl font-bold text-text mb-6 tracking-tight">
-                    {{ hero_config.get('title', 'Awesome Self-Hosted') }}
+                    {{ hero_config.get('title', site_config.title) }}
                 </h1>
 
                 {% if hero_config.get('subtitle') %}
@@ -365,7 +365,7 @@
                     Statistics
                 </h2>
                 <p class="text-lg text-text-muted">
-                    Deep dive into the awesome-selfhosted ecosystem
+                    Deep dive into the {{ site_config.title }} ecosystem
                 </p>
             </div>
 
@@ -479,7 +479,7 @@
     </div>
 
   {% elif section == 'footer_markdown' and markdown_data.get('footer') %}
-    <!-- Footer Content from awesome-selfhosted-data -->
+    <!-- Footer content from markdown data source -->
     <div class="{{ get_section_bg_class() }} py-16">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-left">

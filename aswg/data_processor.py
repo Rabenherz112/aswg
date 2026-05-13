@@ -84,9 +84,10 @@ class DataProcessor:  # pylint: disable=too-many-instance-attributes
         platforms_dir = data_dir / data_config["platforms_dir"]
         platforms_data = self._load_platforms_data(platforms_dir)
 
-        # Load licenses data (both free and non-free)
+        # Load licenses data (free always, non-free only if configured)
         licenses_file = data_dir / data_config["licenses_file"]
-        licenses_nonfree_file = data_dir / data_config["licenses_nonfree_file"]
+        nonfree_filename = data_config.get("licenses_nonfree_file")
+        licenses_nonfree_file = data_dir / nonfree_filename if nonfree_filename else None
         licenses_data = self._load_licenses_data(licenses_file, licenses_nonfree_file)
 
         # Load markdown files
@@ -199,9 +200,9 @@ class DataProcessor:  # pylint: disable=too-many-instance-attributes
         return platforms_data
 
     def _load_licenses_data(
-        self, licenses_file: Path, licenses_nonfree_file: Path
+        self, licenses_file: Path, licenses_nonfree_file: Optional[Path] = None
     ) -> Dict[str, Dict]:
-        """Load both free and non-free licenses YAML files."""
+        """Load free licenses, plus non-free licenses if a file is provided."""
         licenses_data = {}
 
         # Load free licenses
@@ -224,7 +225,10 @@ class DataProcessor:  # pylint: disable=too-many-instance-attributes
         else:
             print(f"Warning: Licenses file not found: {licenses_file}")
 
-        # Load non-free licenses
+        # Load non-free licenses only if explicitly configured
+        if licenses_nonfree_file is None:
+            return licenses_data
+
         if licenses_nonfree_file.exists():
             try:
                 with open(licenses_nonfree_file, "r", encoding="utf-8") as f:
@@ -242,7 +246,7 @@ class DataProcessor:  # pylint: disable=too-many-instance-attributes
             except (yaml.YAMLError, OSError) as e:
                 print(f"Error loading {licenses_nonfree_file}: {e}")
         else:
-            print(f"Note: Non-free licenses file not found: {licenses_nonfree_file}")
+            print(f"Warning: Non-free licenses file configured but not found: {licenses_nonfree_file}")
 
         return licenses_data
 
