@@ -1,1 +1,19 @@
-[]
+[
+  {
+    "number": 81,
+    "title": "chore: prepare aswg for awesome-sysadmin-data",
+    "author": "Rabenherz112",
+    "branch": "chore-sysadmin-ready",
+    "commit": "3f3de7b",
+    "commit_full": "3f3de7b7e09befd7bb31610a3a3186df5a1b9ded",
+    "url": "pr-81/",
+    "pr_url": "https://github.com/Rabenherz112/aswg/pull/81",
+    "updated": "2026-05-13T10:04:04+00:00",
+    "build": {
+      "duration": "29s",
+      "total_files": "1335",
+      "html_pages": "1318",
+      "size": "43M"
+    }
+  }
+]
