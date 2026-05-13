@@ -24,35 +24,40 @@ from .utils import format_bytes, get_directory_size, print_build_stats
 
 def create_parser():
     """Create the argument parser."""
-    common_parser = argparse.ArgumentParser(add_help=False)
-    common_parser.add_argument('--config', '-c', default='config/config.yml', help='Configuration file path (default: config/config.yml)')
-    common_parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose output')
+    root_parser = argparse.ArgumentParser(add_help=False)
+    root_parser.add_argument('--config', '-c', default='config/config.yml', help='Configuration file path (default: config/config.yml)')
+    root_parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose output')
+
+    # Keep subcommand defaults suppressed so root options provided before the command are preserved.
+    subcommand_parser = argparse.ArgumentParser(add_help=False)
+    subcommand_parser.add_argument('--config', '-c', default=argparse.SUPPRESS, help='Configuration file path (default: config/config.yml)')
+    subcommand_parser.add_argument('--verbose', '-v', action='store_true', default=argparse.SUPPRESS, help='Enable verbose output')
 
     parser = argparse.ArgumentParser(
         description='Awesome Self-Hosted Website Generator - Generate a beautiful static website from the awesome-selfhosted dataset.',
-        parents=[common_parser],
+        parents=[root_parser],
     )
 
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
 
     # Fetch command
-    subparsers.add_parser('fetch', help='Fetch and process awesome-selfhosted data', parents=[common_parser])
+    subparsers.add_parser('fetch', help='Fetch and process awesome-selfhosted data', parents=[subcommand_parser])
 
     # Build command
-    build_parser = subparsers.add_parser('build', help='Build the complete static website', parents=[common_parser])
+    build_parser = subparsers.add_parser('build', help='Build the complete static website', parents=[subcommand_parser])
     build_parser.add_argument('--fetch-first', action='store_true', help='Fetch fresh data before building')
 
     # Watch command
     watch_parser = subparsers.add_parser(
-        'watch', help='Watch for changes and rebuild automatically', parents=[common_parser]
+        'watch', help='Watch for changes and rebuild automatically', parents=[subcommand_parser]
     )
     watch_parser.add_argument('--interval', '-i', type=int, default=5, help='Watch interval in seconds (default: 5)')
 
     # Clean command
-    subparsers.add_parser('clean', help='Clean output and cache directories', parents=[common_parser])
+    subparsers.add_parser('clean', help='Clean output and cache directories', parents=[subcommand_parser])
 
     # Info command
-    subparsers.add_parser('info', help='Show configuration and system information', parents=[common_parser])
+    subparsers.add_parser('info', help='Show configuration and system information', parents=[subcommand_parser])
 
     return parser
 
