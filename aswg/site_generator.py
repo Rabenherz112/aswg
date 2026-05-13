@@ -45,6 +45,12 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
         # Register template helpers
         self._register_template_functions()
 
+    def _has_nonfree_licenses(self) -> bool:
+        """Return True if any loaded license entry is marked as non-free."""
+        if not self.licenses_data:
+            return False
+        return any(not lic.get("free", True) for lic in self.licenses_data.values())
+
     def _register_template_functions(self):
         """Register custom template functions and filters."""
         # Global functions
@@ -54,6 +60,10 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
                 "ui_config": self.config.get("ui", {}),
                 "footer_config": self.config.get("footer", {}),
                 "hero_config": self.config.get("hero", {}),
+                "data_config": self.config.get("data", {}),
+                "data_source_name": self.config.get(
+                    "data.display_name", self.config.get("data.data_dir", "data")
+                ),
                 "navigation_config": self.config.get("navigation", {}),
                 "pages_config": self.config.get("pages", {}),
                 "roadmap_config": self.config.get("roadmap", {}),
@@ -63,6 +73,7 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
                 "generation_config": self.config.get_generation_config(),
                 "search_config": self.config.get_search_config(),
                 "performance_config": self.config.get_performance_config(),
+                "nonfree_supported": self._has_nonfree_licenses(),
                 "format_stars": self.template_helpers.format_stars,
                 "format_date": self.template_helpers.format_date,
                 "format_license": self.template_helpers.format_license,

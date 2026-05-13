@@ -12,6 +12,12 @@ All notable changes to this project will be documented in this file. The format 
 
 - Fixed link in App detail page, to return to browse page
 - Fixed open-external-new-tab and open-internal-new-tab meta tags to be case-insensitive
+- Made `licenses_nonfree_file` optional so data repos that only ship a free `licenses.yml` (e.g. `awesome-sysadmin-data`) build without errors and the "Include Non-Free" toggle is hidden when no non-free licenses are configured
+- Fixed CLI argument parsing to allow argument to be used after a subcommand
+
+### Other changes
+
+- Templates do now not mention "awesome-selfhosted" hardcoded anymore but instead use the `site_config.title` variable
 
 ## [2.2.0] - 2026-03-08
 

@@ -244,22 +244,23 @@ class BrowsePage {
     }
 
     async loadLicenseData() {
-        // Load non-free license identifiers from search data
+        // Load non-free license identifiers from search data.
+        // An empty nonfree_licenses array is the normal state for free-only data repos;
+        // the toggle DOM is hidden server-side, so no extra signal is required here.
         try {
             const response = await fetch(this.basePath + '/static/data/search.json');
             const data = await response.json();
-            
+
             if (data.nonfree_licenses && Array.isArray(data.nonfree_licenses)) {
                 data.nonfree_licenses.forEach(license => {
                     this.nonFreeLicenses.add(license);
                 });
             } else {
-                // Fallback to basic proprietary check if data not available
+                // Defensive fallback for stale/malformed search.json
                 this.nonFreeLicenses.add('⊘ Proprietary');
             }
         } catch (error) {
             console.error('Failed to load license data:', error);
-            // Fallback to basic proprietary check
             this.nonFreeLicenses.add('⊘ Proprietary');
         }
     }
@@ -936,7 +937,7 @@ class BrowsePage {
     }
 
     setupEventListeners() {
-        // Show non-free toggle
+        // Show non-free toggle (only present in DOM when non-free licenses are configured)
         const showNonFreeToggle = document.getElementById('showNonFree');
         if (showNonFreeToggle) {
             showNonFreeToggle.addEventListener('change', (e) => {

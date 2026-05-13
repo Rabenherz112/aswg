@@ -19,6 +19,8 @@ data:
   categories_dir: "tags"
   platforms_dir: "platforms"
   licenses_file: "licenses.yml"
+  # Optional: omit for data repos that only ship free licenses (e.g. awesome-sysadmin-data).
+  # When unset, the "Include Non-Free" toggle is hidden and no non-free filtering is applied.
   licenses_nonfree_file: "licenses-nonfree.yml"
 
 # =============================================================================

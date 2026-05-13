@@ -24,33 +24,35 @@ from .utils import format_bytes, get_directory_size, print_build_stats
 
 def create_parser():
     """Create the argument parser."""
-    parser = argparse.ArgumentParser(
-        description='Awesome Self-Hosted Website Generator - Generate a beautiful static website from the awesome-selfhosted dataset.'
-    )
+    common_parser = argparse.ArgumentParser(add_help=False)
+    common_parser.add_argument('--config', '-c', default='config/config.yml', help='Configuration file path (default: config/config.yml)')
+    common_parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose output')
 
-    parser.add_argument('--config', '-c', default='config/config.yml', help='Configuration file path (default: config/config.yml)')
-    parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose output')
+    parser = argparse.ArgumentParser(
+        description='Awesome Self-Hosted Website Generator - Generate a beautiful static website from the awesome-selfhosted dataset.',
+        parents=[common_parser],
+    )
 
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
 
     # Fetch command
-    subparsers.add_parser('fetch', help='Fetch and process awesome-selfhosted data')
+    subparsers.add_parser('fetch', help='Fetch and process awesome-selfhosted data', parents=[common_parser])
 
     # Build command
-    build_parser = subparsers.add_parser('build', help='Build the complete static website')
+    build_parser = subparsers.add_parser('build', help='Build the complete static website', parents=[common_parser])
     build_parser.add_argument('--fetch-first', action='store_true', help='Fetch fresh data before building')
 
     # Watch command
     watch_parser = subparsers.add_parser(
-        'watch', help='Watch for changes and rebuild automatically'
+        'watch', help='Watch for changes and rebuild automatically', parents=[common_parser]
     )
     watch_parser.add_argument('--interval', '-i', type=int, default=5, help='Watch interval in seconds (default: 5)')
 
     # Clean command
-    subparsers.add_parser('clean', help='Clean output and cache directories')
+    subparsers.add_parser('clean', help='Clean output and cache directories', parents=[common_parser])
 
     # Info command
-    subparsers.add_parser('info', help='Show configuration and system information')
+    subparsers.add_parser('info', help='Show configuration and system information', parents=[common_parser])
 
     return parser
 
@@ -288,7 +290,8 @@ def cmd_info(config):  # pylint: disable=too-many-locals,too-many-statements
     print(f"   Categories directory: {data_config.get('categories_dir', 'tags')}")
     print(f"   Platforms directory: {data_config.get('platforms_dir', 'platforms')}")
     print(f"   Licenses file: {data_config.get('licenses_file', 'licenses.yml')}")
-    print(f"   Licenses nonfree file: {data_config.get('licenses_nonfree_file', 'licenses-nonfree.yml')}")
+    nonfree_file = data_config.get('licenses_nonfree_file')
+    print(f"   Licenses nonfree file: {nonfree_file if nonfree_file else '(not configured)'}")
     print(f"   Use git data: {generation_config.get('use_git_data', True)}")
 
     # Cached data
