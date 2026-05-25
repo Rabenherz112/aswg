@@ -30,6 +30,9 @@ class AlternativesPage {
         this.itemsPerPage = 60;
         this.totalPages = 1;
         this.enablePagination = true;
+        this.searchRenderDebounceMs = 180;
+        this.pendingSearchTimeout = null;
+        this.searchData = null;
         
         this.init();
     }
@@ -72,11 +75,19 @@ class AlternativesPage {
         // Load non-free license identifiers from search data.
         // An empty nonfree_licenses array is the normal state for free-only data repos.
         try {
-            const response = await fetch(this.basePath + '/static/data/search.json');
-            const data = await response.json();
+            if (!window.__aswgSearchDataPromise) {
+                window.__aswgSearchDataPromise = fetch(this.basePath + '/static/data/search.json')
+                    .then(response => response.json())
+                    .catch(error => {
+                        console.error('Failed to load shared search data:', error);
+                        return {};
+                    });
+            }
+            const data = await window.__aswgSearchDataPromise;
+            this.searchData = data || {};
 
-            if (data.nonfree_licenses && Array.isArray(data.nonfree_licenses)) {
-                data.nonfree_licenses.forEach(license => {
+            if (this.searchData.nonfree_licenses && Array.isArray(this.searchData.nonfree_licenses)) {
+                this.searchData.nonfree_licenses.forEach(license => {
                     this.nonFreeLicenses.add(license);
                 });
             } else {
@@ -205,6 +216,13 @@ class AlternativesPage {
     }
 
     handleSearchInput(query) {
+        if (this.pendingSearchTimeout) clearTimeout(this.pendingSearchTimeout);
+        this.pendingSearchTimeout = setTimeout(() => {
+            this.applySearchInput(query);
+        }, this.searchRenderDebounceMs);
+    }
+
+    applySearchInput(query) {
         if (query.length === 0) {
             // Show all alternatives when search is empty
             this.filteredAlternatives = { ...this.alternatives };
@@ -298,6 +316,7 @@ class AlternativesPage {
     }
 
     selectSuggestion(suggestion) {
+        if (this.pendingSearchTimeout) clearTimeout(this.pendingSearchTimeout);
         const heroSearch = document.getElementById('alternatives-search');
         if (!heroSearch) {
             console.warn('Search input element not found');
@@ -306,9 +325,7 @@ class AlternativesPage {
         
         heroSearch.value = suggestion;
         this.hideSearchSuggestions();
-        this.filterAlternatives(suggestion);
-        this.currentPage = 1; // Reset to first page
-        this.renderAlternatives();
+        this.applySearchInput(suggestion);
     }
 
     handleKeyboardNavigation(e) {
@@ -434,11 +451,13 @@ class AlternativesPage {
         }
 
         // Render each software group
+        const fragment = document.createDocumentFragment();
         pageSoftwareNames.forEach(softwareName => {
             const alternatives = this.filteredAlternatives[softwareName];
             const groupElement = this.createSoftwareGroup(softwareName, alternatives);
-            container.appendChild(groupElement);
+            fragment.appendChild(groupElement);
         });
+        container.appendChild(fragment);
 
         // Update statistics to reflect current filtered state
         this.updateStatistics();
@@ -499,11 +518,12 @@ class AlternativesPage {
         
         // Show only first N alternatives initially, or all if N or fewer
         const alternativesToShow = alternatives.slice(0, this.alternativesShowMoreThreshold);
-        
+        const initialCardsFragment = document.createDocumentFragment();
         alternativesToShow.forEach(app => {
             const appCard = this.createApplicationCard(app);
-            gridDiv.appendChild(appCard);
+            initialCardsFragment.appendChild(appCard);
         });
+        gridDiv.appendChild(initialCardsFragment);
         
         // Add "Show More" button if there are more than threshold alternatives
         if (alternatives.length > this.alternativesShowMoreThreshold) {
@@ -518,10 +538,12 @@ class AlternativesPage {
             showMoreButton.addEventListener('click', () => {
                 // Add remaining alternatives
                 const remainingAlternatives = alternatives.slice(this.alternativesShowMoreThreshold);
+                const remainingCardsFragment = document.createDocumentFragment();
                 remainingAlternatives.forEach(app => {
                     const appCard = this.createApplicationCard(app);
-                    gridDiv.appendChild(appCard);
+                    remainingCardsFragment.appendChild(appCard);
                 });
+                gridDiv.appendChild(remainingCardsFragment);
                 
                 // Remove show more button
                 showMoreDiv.remove();

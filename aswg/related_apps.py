@@ -20,6 +20,7 @@ class RelatedAppsFinder:
         """
         self.config = config
         self.licenses_data = licenses_data
+        self._nonfree_licenses: Optional[Set[str]] = None
         self._cached_app_phrases: Optional[Dict[str, Set[str]]] = None
         self._cached_app_list_id: Optional[int] = None
 
@@ -27,6 +28,19 @@ class RelatedAppsFinder:
         """Clear the cached phrase data. Useful for testing or when app list changes."""
         self._cached_app_phrases = None
         self._cached_app_list_id = None
+
+    def _get_nonfree_licenses(self) -> Set[str]:
+        """Return cached set of non-free license identifiers."""
+        if self._nonfree_licenses is None:
+            if not self.licenses_data:
+                self._nonfree_licenses = set()
+            else:
+                self._nonfree_licenses = {
+                    lic_id
+                    for lic_id, lic_info in self.licenses_data.items()
+                    if not lic_info.get("free", True)
+                }
+        return self._nonfree_licenses
 
     def find_related_apps(
         self,
@@ -534,11 +548,7 @@ class RelatedAppsFinder:
 
         # Get non-free license identifiers from loaded license data
         if self.licenses_data:
-            nonfree_licenses = {
-                lic_id
-                for lic_id, lic_info in self.licenses_data.items()
-                if not lic_info.get("free", True)
-            }
+            nonfree_licenses = self._get_nonfree_licenses()
             return any(lic in nonfree_licenses for lic in app.license)
 
         # Fallback to basic check if license data not available
