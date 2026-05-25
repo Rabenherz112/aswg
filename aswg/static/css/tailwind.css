@@ -156,6 +156,7 @@
     --color-platform-assembly: #9E7C43;
     --color-platform-objectivec: #73BEFF;
     --color-platform-haxe: #FF9930;
+    --color-platform-raspberrypi: #D93A67;
     --color-platform-default: #9CA3AF;
   }
 }
@@ -2172,6 +2173,7 @@
   --color-platform-assembly: #6E4C13;
   --color-platform-objectivec: #438EFF;
   --color-platform-haxe: #DF7900;
+  --color-platform-raspberrypi: #C51A4A;
   --color-platform-default: #6B7280;
 }
 @property --tw-translate-x {

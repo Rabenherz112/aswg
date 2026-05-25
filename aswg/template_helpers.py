@@ -272,6 +272,7 @@ class TemplateHelpers:  # pylint: disable=too-many-public-methods
             "objective-c": "var(--color-platform-objectivec)",
             "objectivec": "var(--color-platform-objectivec)",
             "haxe": "var(--color-platform-haxe)",
+            "raspberrypi": "var(--color-platform-raspberrypi)",
         }
 
         if not platform:

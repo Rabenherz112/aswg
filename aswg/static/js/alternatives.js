@@ -711,7 +711,8 @@ class AlternativesPage {
             'assembly': 'var(--color-platform-assembly)',
             'objective-c': 'var(--color-platform-objectivec)',
             'objectivec': 'var(--color-platform-objectivec)',
-            'haxe': 'var(--color-platform-haxe)'
+            'haxe': 'var(--color-platform-haxe)',
+            'raspberrypi': 'var(--color-platform-raspberrypi)'
         };
         
         if (!platform) {
