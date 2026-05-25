@@ -44,6 +44,8 @@ class BrowsePage {
         this.updatedMax = Infinity;
         this.updatedDataMax = 365; // Will be calculated from dataset
         this.includeNoUpdateDate = true; // Include apps without update date by default
+        this.pendingFacetCountTimeout = null;
+        this.facetCountDebounceMs = 80;
 
         this.init();
     }
@@ -533,9 +535,13 @@ class BrowsePage {
             this.updateRangeHighlight(minSlider, maxSlider, highlight);
             this.updateResetButton(resetId, minPos !== 0 || maxPos !== steps.length - 1);
             this.currentPage = 1;
-            this.filterSortAndRender();
+            this.filterSortAndRender({ deferFacetCounts: true });
             // Use this.starsMax to ensure sync matches stored state (may be Infinity when at max)
             this.syncStarsSlider(syncTarget, minVal, this.starsMax);
+        });
+
+        minSlider.addEventListener('change', () => {
+            this.filterSortAndRender();
         });
 
         // Max slider event
@@ -559,8 +565,12 @@ class BrowsePage {
             this.updateRangeHighlight(minSlider, maxSlider, highlight);
             this.updateResetButton(resetId, minPos !== 0 || maxPos !== steps.length - 1);
             this.currentPage = 1;
-            this.filterSortAndRender();
+            this.filterSortAndRender({ deferFacetCounts: true });
             this.syncStarsSlider(syncTarget, minVal, isAtMax ? Infinity : maxVal);
+        });
+
+        maxSlider.addEventListener('change', () => {
+            this.filterSortAndRender();
         });
 
         // Editable min value - allows custom values (not just steps)
@@ -704,9 +714,13 @@ class BrowsePage {
             this.updateRangeHighlight(minSlider, maxSlider, highlight);
             this.updateResetButton(resetId, minPos !== 0 || maxPos !== steps.length - 1);
             this.currentPage = 1;
-            this.filterSortAndRender();
+            this.filterSortAndRender({ deferFacetCounts: true });
             // Use this.updatedMax to ensure sync matches stored state (may be Infinity when at max)
             this.syncUpdatedSlider(syncTarget, minVal, this.updatedMax);
+        });
+
+        minSlider.addEventListener('change', () => {
+            this.filterSortAndRender();
         });
 
         // Max slider event
@@ -729,8 +743,12 @@ class BrowsePage {
             this.updateRangeHighlight(minSlider, maxSlider, highlight);
             this.updateResetButton(resetId, minPos !== 0 || maxPos !== steps.length - 1);
             this.currentPage = 1;
-            this.filterSortAndRender();
+            this.filterSortAndRender({ deferFacetCounts: true });
             this.syncUpdatedSlider(syncTarget, minVal, maxPos === steps.length - 1 ? Infinity : maxVal);
+        });
+
+        maxSlider.addEventListener('change', () => {
+            this.filterSortAndRender();
         });
 
         // Editable min value - allows custom values (not just steps)
@@ -1361,7 +1379,16 @@ class BrowsePage {
         this.updateFilterCountLabels('#mobileCategoryFilters input[data-category]', 'category', categoryCounts);
     }
 
-    filterSortAndRender() {
+    scheduleFacetCountUpdate() {
+        if (this.pendingFacetCountTimeout) return;
+        this.pendingFacetCountTimeout = window.setTimeout(() => {
+            this.pendingFacetCountTimeout = null;
+            this.updateFilterCounts();
+        }, this.facetCountDebounceMs);
+    }
+
+    filterSortAndRender(options = {}) {
+        const { deferFacetCounts = false } = options;
         // Filter applications
         this.filteredApplications = this.applications.filter(app => this.appMatchesFilters(app));
 
@@ -1376,7 +1403,15 @@ class BrowsePage {
         
         // Render current page
         this.renderCurrentPage();
-        this.updateFilterCounts();
+        if (deferFacetCounts) {
+            this.scheduleFacetCountUpdate();
+        } else {
+            if (this.pendingFacetCountTimeout) {
+                clearTimeout(this.pendingFacetCountTimeout);
+                this.pendingFacetCountTimeout = null;
+            }
+            this.updateFilterCounts();
+        }
         this.updateCounts();
         if (this.enablePagination) {
             this.updatePaginationControls();
