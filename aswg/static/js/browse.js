@@ -1019,7 +1019,7 @@ class BrowsePage {
                        data-platform="${platform}">
                 <span class="flex-1">
                     ${platform}
-                    <span class="text-xs opacity-70 ml-1">(${platformCount})</span>
+                    <span class="filter-count text-xs opacity-70 ml-1">(${platformCount})</span>
                 </span>
             `;
 
@@ -1071,7 +1071,7 @@ class BrowsePage {
                        data-license="${license}">
                 <span class="flex-1">
                     ${license}
-                    <span class="text-xs opacity-70 ml-1">(${licenseCount})</span>
+                    <span class="filter-count text-xs opacity-70 ml-1">(${licenseCount})</span>
                 </span>
             `;
 
@@ -1118,7 +1118,7 @@ class BrowsePage {
                        data-category="${category}">
                 <span class="flex-1">
                     ${category}
-                    <span class="text-xs opacity-70 ml-1">(${categoryCount})</span>
+                    <span class="filter-count text-xs opacity-70 ml-1">(${categoryCount})</span>
                 </span>
             `;
 
@@ -1279,60 +1279,98 @@ class BrowsePage {
         );
     }
 
+    appMatchesFilters(app, excludedFilter = null) {
+        // Platform filter
+        if (excludedFilter !== 'platform' && this.selectedPlatforms.size > 0) {
+            const hasSelectedPlatform = app.platforms &&
+                app.platforms.some(platform => this.selectedPlatforms.has(platform));
+            if (!hasSelectedPlatform) return false;
+        }
+
+        // License filter
+        if (excludedFilter !== 'license' && this.selectedLicenses.size > 0) {
+            const hasSelectedLicense = app.license &&
+                app.license.some(license => this.selectedLicenses.has(license));
+            if (!hasSelectedLicense) return false;
+        }
+
+        // Category filter
+        if (excludedFilter !== 'category' && this.selectedCategories.size > 0) {
+            const hasSelectedCategory = app.categories &&
+                app.categories.some(category => this.selectedCategories.has(category));
+            if (!hasSelectedCategory) return false;
+        }
+
+        // Non-free license filter
+        if (!this.showNonFreeOnly && this.isNonFreeLicense(app.license)) return false;
+
+        // Star count filter
+        const appStars = app.stars || 0;
+        if (appStars < this.starsMin || appStars > this.starsMax) return false;
+
+        // Last updated filter (in days)
+        const daysSinceUpdate = this.getDaysSinceUpdate(app.last_updated);
+        if (daysSinceUpdate !== null) {
+            if (daysSinceUpdate < this.updatedMin || daysSinceUpdate > this.updatedMax) return false;
+        } else if (!this.includeNoUpdateDate) {
+            return false;
+        }
+
+        return true;
+    }
+
+    countFacetValues(apps, key) {
+        const counts = new Map();
+        apps.forEach(app => {
+            const values = app[key];
+            if (!Array.isArray(values)) return;
+            values.forEach(value => {
+                if (!value || !value.trim()) return;
+                const normalizedValue = value.trim();
+                counts.set(normalizedValue, (counts.get(normalizedValue) || 0) + 1);
+            });
+        });
+        return counts;
+    }
+
+    updateFilterCountLabels(selector, dataKey, counts) {
+        document.querySelectorAll(selector).forEach(checkbox => {
+            const value = checkbox.dataset[dataKey];
+            if (!value) return;
+            const label = checkbox.closest('label');
+            if (!label) return;
+            const countNode = label.querySelector('.filter-count');
+            if (!countNode) return;
+            const count = counts.get(value) || 0;
+            countNode.textContent = `(${count})`;
+        });
+    }
+
+    updateFilterCounts() {
+        const platformCounts = this.countFacetValues(
+            this.applications.filter(app => this.appMatchesFilters(app, 'platform')),
+            'platforms'
+        );
+        const licenseCounts = this.countFacetValues(
+            this.applications.filter(app => this.appMatchesFilters(app, 'license')),
+            'license'
+        );
+        const categoryCounts = this.countFacetValues(
+            this.applications.filter(app => this.appMatchesFilters(app, 'category')),
+            'categories'
+        );
+
+        this.updateFilterCountLabels('#platformFilters input[data-platform]', 'platform', platformCounts);
+        this.updateFilterCountLabels('#mobilePlatformFilters input[data-platform]', 'platform', platformCounts);
+        this.updateFilterCountLabels('#licenseFilters input[data-license]', 'license', licenseCounts);
+        this.updateFilterCountLabels('#mobileLicenseFilters input[data-license]', 'license', licenseCounts);
+        this.updateFilterCountLabels('#categoryFilters input[data-category]', 'category', categoryCounts);
+        this.updateFilterCountLabels('#mobileCategoryFilters input[data-category]', 'category', categoryCounts);
+    }
+
     filterSortAndRender() {
         // Filter applications
-        this.filteredApplications = this.applications.filter(app => {
-            // Platform filter
-            if (this.selectedPlatforms.size > 0) {
-                const hasSelectedPlatform = app.platforms && 
-                    app.platforms.some(platform => this.selectedPlatforms.has(platform));
-                if (!hasSelectedPlatform) return false;
-            }
-
-            // License filter
-            if (this.selectedLicenses.size > 0) {
-                const hasSelectedLicense = app.license && 
-                    app.license.some(license => this.selectedLicenses.has(license));
-                if (!hasSelectedLicense) return false;
-            }
-
-            // Category filter
-            if (this.selectedCategories.size > 0) {
-                const hasSelectedCategory = app.categories && 
-                    app.categories.some(category => this.selectedCategories.has(category));
-                if (!hasSelectedCategory) return false;
-            }
-
-            // Non-free license filter
-            if (this.showNonFreeOnly) {
-                // When toggle is ON: show ALL software (free + non-free)
-                // No filtering needed - show everything
-            } else {
-                // When toggle is OFF: hide non-free software (show only free software)
-                if (this.isNonFreeLicense(app.license)) return false;
-            }
-
-            // Star count filter
-            const appStars = app.stars || 0;
-            if (appStars < this.starsMin || appStars > this.starsMax) {
-                return false;
-            }
-
-            // Last updated filter (in days)
-            const daysSinceUpdate = this.getDaysSinceUpdate(app.last_updated);
-            if (daysSinceUpdate !== null) {
-                if (daysSinceUpdate < this.updatedMin || daysSinceUpdate > this.updatedMax) {
-                    return false;
-                }
-            } else {
-                // App has no last_updated date - check if we should include it
-                if (!this.includeNoUpdateDate) {
-                    return false;
-                }
-            }
-
-            return true;
-        });
+        this.filteredApplications = this.applications.filter(app => this.appMatchesFilters(app));
 
         // Sort applications
         this.sortApplications();
@@ -1345,6 +1383,7 @@ class BrowsePage {
         
         // Render current page
         this.renderCurrentPage();
+        this.updateFilterCounts();
         this.updateCounts();
         if (this.enablePagination) {
             this.updatePaginationControls();
@@ -1826,7 +1865,7 @@ class BrowsePage {
                        data-platform="${platform}">
                 <span class="flex-1">
                     ${platform}
-                    <span class="text-xs opacity-70 ml-1">(${platformCount})</span>
+                    <span class="filter-count text-xs opacity-70 ml-1">(${platformCount})</span>
                 </span>
             `;
 
@@ -1881,7 +1920,7 @@ class BrowsePage {
                        data-license="${license}">
                 <span class="flex-1">
                     ${license}
-                    <span class="text-xs opacity-70 ml-1">(${licenseCount})</span>
+                    <span class="filter-count text-xs opacity-70 ml-1">(${licenseCount})</span>
                 </span>
             `;
 
@@ -1927,7 +1966,7 @@ class BrowsePage {
                        data-category="${category}">
                 <span class="flex-1">
                     ${category}
-                    <span class="text-xs opacity-70 ml-1">(${categoryCount})</span>
+                    <span class="filter-count text-xs opacity-70 ml-1">(${categoryCount})</span>
                 </span>
             `;
 
