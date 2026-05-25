@@ -6,18 +6,20 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Additions
 
-- Added Roadmap functionality with Kanban board and ability to share roadmap
+- Added a Roadmap page with a Kanban view and sharing support
+- Filter result counts on the browse page now update automatically as you apply filters
 
 ### Bug Fixes
 
-- Fixed link in App detail page, to return to browse page
-- Fixed open-external-new-tab and open-internal-new-tab meta tags to be case-insensitive
-- Made `licenses_nonfree_file` optional so data repos that only ship a free `licenses.yml` (e.g. `awesome-sysadmin-data`) build without errors and the "Include Non-Free" toggle is hidden when no non-free licenses are configured
-- Fixed CLI argument parsing to allow argument to be used after a subcommand
+- Fixed the "Back to browse" link on app detail pages
+- Fixed new-tab link settings so they work regardless of letter casing
+- Fixed builds for datasets that only provide free-license data and hide the "Include Non-Free" toggle when non-free data is unavailable
+- Fixed command-line argument handling so options also work after subcommands
 
 ### Other changes
 
-- Templates do now not mention "awesome-selfhosted" hardcoded anymore but instead use the `site_config.title` variable
+- Templates now use your configured site title instead of showing "awesome-selfhosted" as fixed text
+- Support for Raspberry Pi as a platform
 
 ## [2.2.0] - 2026-03-08
 
