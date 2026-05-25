@@ -44,6 +44,8 @@ class BrowsePage {
         this.updatedMax = Infinity;
         this.updatedDataMax = 365; // Will be calculated from dataset
         this.includeNoUpdateDate = true; // Include apps without update date by default
+        this.pendingFacetCountTimeout = null;
+        this.facetCountDebounceMs = 80;
 
         this.init();
     }
@@ -269,9 +271,7 @@ class BrowsePage {
         this.applications.forEach(app => {
             if (app.platforms) {
                 app.platforms.forEach(platform => {
-                    if (platform && platform.trim()) {
-                        this.platforms.add(platform.trim());
-                    }
+                    if (platform) this.platforms.add(platform);
                 });
             }
         });
@@ -281,9 +281,7 @@ class BrowsePage {
         this.applications.forEach(app => {
             if (app.license) {
                 app.license.forEach(license => {
-                    if (license && license.trim()) {
-                        this.licenses.add(license.trim());
-                    }
+                    if (license) this.licenses.add(license);
                 });
             }
         });
@@ -293,9 +291,7 @@ class BrowsePage {
         this.applications.forEach(app => {
             if (app.categories) {
                 app.categories.forEach(category => {
-                    if (category && category.trim()) {
-                        this.categories.add(category.trim());
-                    }
+                    if (category) this.categories.add(category);
                 });
             }
         });
@@ -539,9 +535,13 @@ class BrowsePage {
             this.updateRangeHighlight(minSlider, maxSlider, highlight);
             this.updateResetButton(resetId, minPos !== 0 || maxPos !== steps.length - 1);
             this.currentPage = 1;
-            this.filterSortAndRender();
+            this.filterSortAndRender({ deferFacetCounts: true });
             // Use this.starsMax to ensure sync matches stored state (may be Infinity when at max)
             this.syncStarsSlider(syncTarget, minVal, this.starsMax);
+        });
+
+        minSlider.addEventListener('change', () => {
+            this.filterSortAndRender();
         });
 
         // Max slider event
@@ -565,8 +565,12 @@ class BrowsePage {
             this.updateRangeHighlight(minSlider, maxSlider, highlight);
             this.updateResetButton(resetId, minPos !== 0 || maxPos !== steps.length - 1);
             this.currentPage = 1;
-            this.filterSortAndRender();
+            this.filterSortAndRender({ deferFacetCounts: true });
             this.syncStarsSlider(syncTarget, minVal, isAtMax ? Infinity : maxVal);
+        });
+
+        maxSlider.addEventListener('change', () => {
+            this.filterSortAndRender();
         });
 
         // Editable min value - allows custom values (not just steps)
@@ -710,9 +714,13 @@ class BrowsePage {
             this.updateRangeHighlight(minSlider, maxSlider, highlight);
             this.updateResetButton(resetId, minPos !== 0 || maxPos !== steps.length - 1);
             this.currentPage = 1;
-            this.filterSortAndRender();
+            this.filterSortAndRender({ deferFacetCounts: true });
             // Use this.updatedMax to ensure sync matches stored state (may be Infinity when at max)
             this.syncUpdatedSlider(syncTarget, minVal, this.updatedMax);
+        });
+
+        minSlider.addEventListener('change', () => {
+            this.filterSortAndRender();
         });
 
         // Max slider event
@@ -735,8 +743,12 @@ class BrowsePage {
             this.updateRangeHighlight(minSlider, maxSlider, highlight);
             this.updateResetButton(resetId, minPos !== 0 || maxPos !== steps.length - 1);
             this.currentPage = 1;
-            this.filterSortAndRender();
+            this.filterSortAndRender({ deferFacetCounts: true });
             this.syncUpdatedSlider(syncTarget, minVal, maxPos === steps.length - 1 ? Infinity : maxVal);
+        });
+
+        maxSlider.addEventListener('change', () => {
+            this.filterSortAndRender();
         });
 
         // Editable min value - allows custom values (not just steps)
@@ -1019,7 +1031,7 @@ class BrowsePage {
                        data-platform="${platform}">
                 <span class="flex-1">
                     ${platform}
-                    <span class="text-xs opacity-70 ml-1">(${platformCount})</span>
+                    <span class="filter-count text-xs opacity-70 ml-1">(${platformCount})</span>
                 </span>
             `;
 
@@ -1071,7 +1083,7 @@ class BrowsePage {
                        data-license="${license}">
                 <span class="flex-1">
                     ${license}
-                    <span class="text-xs opacity-70 ml-1">(${licenseCount})</span>
+                    <span class="filter-count text-xs opacity-70 ml-1">(${licenseCount})</span>
                 </span>
             `;
 
@@ -1118,7 +1130,7 @@ class BrowsePage {
                        data-category="${category}">
                 <span class="flex-1">
                     ${category}
-                    <span class="text-xs opacity-70 ml-1">(${categoryCount})</span>
+                    <span class="filter-count text-xs opacity-70 ml-1">(${categoryCount})</span>
                 </span>
             `;
 
@@ -1279,60 +1291,106 @@ class BrowsePage {
         );
     }
 
-    filterSortAndRender() {
-        // Filter applications
-        this.filteredApplications = this.applications.filter(app => {
-            // Platform filter
-            if (this.selectedPlatforms.size > 0) {
-                const hasSelectedPlatform = app.platforms && 
-                    app.platforms.some(platform => this.selectedPlatforms.has(platform));
-                if (!hasSelectedPlatform) return false;
-            }
+    appMatchesFilters(app, excludedFilter = null) {
+        // Platform filter
+        if (excludedFilter !== 'platform' && this.selectedPlatforms.size > 0) {
+            const hasSelectedPlatform = app.platforms &&
+                app.platforms.some(platform => this.selectedPlatforms.has(platform));
+            if (!hasSelectedPlatform) return false;
+        }
 
-            // License filter
-            if (this.selectedLicenses.size > 0) {
-                const hasSelectedLicense = app.license && 
-                    app.license.some(license => this.selectedLicenses.has(license));
-                if (!hasSelectedLicense) return false;
-            }
+        // License filter
+        if (excludedFilter !== 'license' && this.selectedLicenses.size > 0) {
+            const hasSelectedLicense = app.license &&
+                app.license.some(license => this.selectedLicenses.has(license));
+            if (!hasSelectedLicense) return false;
+        }
 
-            // Category filter
-            if (this.selectedCategories.size > 0) {
-                const hasSelectedCategory = app.categories && 
-                    app.categories.some(category => this.selectedCategories.has(category));
-                if (!hasSelectedCategory) return false;
-            }
+        // Category filter
+        if (excludedFilter !== 'category' && this.selectedCategories.size > 0) {
+            const hasSelectedCategory = app.categories &&
+                app.categories.some(category => this.selectedCategories.has(category));
+            if (!hasSelectedCategory) return false;
+        }
 
-            // Non-free license filter
-            if (this.showNonFreeOnly) {
-                // When toggle is ON: show ALL software (free + non-free)
-                // No filtering needed - show everything
-            } else {
-                // When toggle is OFF: hide non-free software (show only free software)
-                if (this.isNonFreeLicense(app.license)) return false;
-            }
+        // Non-free license filter
+        if (!this.showNonFreeOnly && this.isNonFreeLicense(app.license)) return false;
 
-            // Star count filter
-            const appStars = app.stars || 0;
-            if (appStars < this.starsMin || appStars > this.starsMax) {
-                return false;
-            }
+        // Star count filter
+        const appStars = app.stars || 0;
+        if (appStars < this.starsMin || appStars > this.starsMax) return false;
 
-            // Last updated filter (in days)
-            const daysSinceUpdate = this.getDaysSinceUpdate(app.last_updated);
-            if (daysSinceUpdate !== null) {
-                if (daysSinceUpdate < this.updatedMin || daysSinceUpdate > this.updatedMax) {
-                    return false;
-                }
-            } else {
-                // App has no last_updated date - check if we should include it
-                if (!this.includeNoUpdateDate) {
-                    return false;
-                }
-            }
+        // Last updated filter (in days)
+        const daysSinceUpdate = this.getDaysSinceUpdate(app.last_updated);
+        if (daysSinceUpdate !== null) {
+            if (daysSinceUpdate < this.updatedMin || daysSinceUpdate > this.updatedMax) return false;
+        } else if (!this.includeNoUpdateDate) {
+            return false;
+        }
 
-            return true;
+        return true;
+    }
+
+    countFacetValues(apps, key) {
+        const counts = new Map();
+        apps.forEach(app => {
+            const values = app[key];
+            if (!Array.isArray(values)) return;
+            values.forEach(value => {
+                if (!value) return;
+                counts.set(value, (counts.get(value) || 0) + 1);
+            });
         });
+        return counts;
+    }
+
+    updateFilterCountLabels(selector, dataKey, counts) {
+        document.querySelectorAll(selector).forEach(checkbox => {
+            const value = checkbox.dataset[dataKey];
+            if (!value) return;
+            const label = checkbox.closest('label');
+            if (!label) return;
+            const countNode = label.querySelector('.filter-count');
+            if (!countNode) return;
+            const count = counts.get(value) || 0;
+            countNode.textContent = `(${count})`;
+        });
+    }
+
+    updateFilterCounts() {
+        const platformCounts = this.countFacetValues(
+            this.applications.filter(app => this.appMatchesFilters(app, 'platform')),
+            'platforms'
+        );
+        const licenseCounts = this.countFacetValues(
+            this.applications.filter(app => this.appMatchesFilters(app, 'license')),
+            'license'
+        );
+        const categoryCounts = this.countFacetValues(
+            this.applications.filter(app => this.appMatchesFilters(app, 'category')),
+            'categories'
+        );
+
+        this.updateFilterCountLabels('#platformFilters input[data-platform]', 'platform', platformCounts);
+        this.updateFilterCountLabels('#mobilePlatformFilters input[data-platform]', 'platform', platformCounts);
+        this.updateFilterCountLabels('#licenseFilters input[data-license]', 'license', licenseCounts);
+        this.updateFilterCountLabels('#mobileLicenseFilters input[data-license]', 'license', licenseCounts);
+        this.updateFilterCountLabels('#categoryFilters input[data-category]', 'category', categoryCounts);
+        this.updateFilterCountLabels('#mobileCategoryFilters input[data-category]', 'category', categoryCounts);
+    }
+
+    scheduleFacetCountUpdate() {
+        if (this.pendingFacetCountTimeout) return;
+        this.pendingFacetCountTimeout = window.setTimeout(() => {
+            this.pendingFacetCountTimeout = null;
+            this.updateFilterCounts();
+        }, this.facetCountDebounceMs);
+    }
+
+    filterSortAndRender(options = {}) {
+        const { deferFacetCounts = false } = options;
+        // Filter applications
+        this.filteredApplications = this.applications.filter(app => this.appMatchesFilters(app));
 
         // Sort applications
         this.sortApplications();
@@ -1345,6 +1403,15 @@ class BrowsePage {
         
         // Render current page
         this.renderCurrentPage();
+        if (deferFacetCounts) {
+            this.scheduleFacetCountUpdate();
+        } else {
+            if (this.pendingFacetCountTimeout) {
+                clearTimeout(this.pendingFacetCountTimeout);
+                this.pendingFacetCountTimeout = null;
+            }
+            this.updateFilterCounts();
+        }
         this.updateCounts();
         if (this.enablePagination) {
             this.updatePaginationControls();
@@ -1826,7 +1893,7 @@ class BrowsePage {
                        data-platform="${platform}">
                 <span class="flex-1">
                     ${platform}
-                    <span class="text-xs opacity-70 ml-1">(${platformCount})</span>
+                    <span class="filter-count text-xs opacity-70 ml-1">(${platformCount})</span>
                 </span>
             `;
 
@@ -1881,7 +1948,7 @@ class BrowsePage {
                        data-license="${license}">
                 <span class="flex-1">
                     ${license}
-                    <span class="text-xs opacity-70 ml-1">(${licenseCount})</span>
+                    <span class="filter-count text-xs opacity-70 ml-1">(${licenseCount})</span>
                 </span>
             `;
 
@@ -1927,7 +1994,7 @@ class BrowsePage {
                        data-category="${category}">
                 <span class="flex-1">
                     ${category}
-                    <span class="text-xs opacity-70 ml-1">(${categoryCount})</span>
+                    <span class="filter-count text-xs opacity-70 ml-1">(${categoryCount})</span>
                 </span>
             `;
 

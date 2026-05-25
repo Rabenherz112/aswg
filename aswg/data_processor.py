@@ -265,17 +265,10 @@ class DataProcessor:  # pylint: disable=too-many-instance-attributes
             website_url = self._validate_url(app_data.get("website_url")) or ""
             icon_url = self._validate_url(app_data.get("icon_url"))
 
-            # Get platforms (technologies/languages) - keep all platforms
-            platforms = app_data.get("platforms", [])
-            # Ensure platforms is always a list (handle legacy cached data)
-            if isinstance(platforms, str):
-                platforms = [platforms] if platforms else []
-
-            # Get licenses - keep all licenses
-            licenses = app_data.get("licenses", [])
-            # Ensure licenses is always a list (handle legacy cached data)
-            if isinstance(licenses, str):
-                licenses = [licenses] if licenses else []
+            # Normalize string-list facets to avoid whitespace mismatch in frontend filters.
+            platforms = self._normalize_string_list(app_data.get("platforms", []))
+            licenses = self._normalize_string_list(app_data.get("licenses", []))
+            categories = self._normalize_string_list(app_data.get("tags", []))
 
             # Parse description annotations
             desc_data = self._parse_description_annotations(
@@ -296,7 +289,7 @@ class DataProcessor:  # pylint: disable=too-many-instance-attributes
                 repo_url=repo_url,
                 demo_url=demo_url,
                 related_software_url=related_software_url,
-                categories=app_data.get("tags", []),
+                categories=categories,
                 license=licenses,
                 platforms=platforms,
                 stars=app_data.get("stargazers_count"),
@@ -317,6 +310,14 @@ class DataProcessor:  # pylint: disable=too-many-instance-attributes
             applications.append(app)
 
         return applications
+
+    def _normalize_string_list(self, values: Any) -> List[str]:
+        """Normalize list-like facet values by trimming and dropping empty/non-string entries."""
+        if isinstance(values, str):
+            values = [values]
+        if not isinstance(values, list):
+            return []
+        return [value.strip() for value in values if isinstance(value, str) and value.strip()]
 
     def _validate_url(self, url: Optional[Any]) -> Optional[str]:
         """Validate icon_url is a well-formed HTTP/HTTPS URL; return it HTML-escaped for attributes."""
