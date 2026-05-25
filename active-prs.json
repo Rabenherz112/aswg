@@ -4,13 +4,13 @@
     "title": "feat: recalculate browse filter facet counts dynamically",
     "author": "Rabenherz112",
     "branch": "feat-dynamic-filter-numbers",
-    "commit": "fe1c2c9",
-    "commit_full": "fe1c2c99f5e1b7a8d7fd82e98742a9479d6dcf33",
+    "commit": "27ab4a5",
+    "commit_full": "27ab4a5008a1fdf254104117065961f62491f86a",
     "url": "pr-82/",
     "pr_url": "https://github.com/Rabenherz112/aswg/pull/82",
-    "updated": "2026-05-25T09:11:19+00:00",
+    "updated": "2026-05-25T11:16:30+00:00",
     "build": {
-      "duration": "32s",
+      "duration": "30s",
       "total_files": "1340",
       "html_pages": "1322",
       "size": "36M"

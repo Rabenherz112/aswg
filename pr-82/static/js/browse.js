@@ -269,9 +269,7 @@ class BrowsePage {
         this.applications.forEach(app => {
             if (app.platforms) {
                 app.platforms.forEach(platform => {
-                    if (platform && platform.trim()) {
-                        this.platforms.add(platform.trim());
-                    }
+                    if (platform) this.platforms.add(platform);
                 });
             }
         });
@@ -281,9 +279,7 @@ class BrowsePage {
         this.applications.forEach(app => {
             if (app.license) {
                 app.license.forEach(license => {
-                    if (license && license.trim()) {
-                        this.licenses.add(license.trim());
-                    }
+                    if (license) this.licenses.add(license);
                 });
             }
         });
@@ -293,9 +289,7 @@ class BrowsePage {
         this.applications.forEach(app => {
             if (app.categories) {
                 app.categories.forEach(category => {
-                    if (category && category.trim()) {
-                        this.categories.add(category.trim());
-                    }
+                    if (category) this.categories.add(category);
                 });
             }
         });
@@ -1325,9 +1319,8 @@ class BrowsePage {
             const values = app[key];
             if (!Array.isArray(values)) return;
             values.forEach(value => {
-                if (!value || !value.trim()) return;
-                const normalizedValue = value.trim();
-                counts.set(normalizedValue, (counts.get(normalizedValue) || 0) + 1);
+                if (!value) return;
+                counts.set(value, (counts.get(value) || 0) + 1);
             });
         });
         return counts;
