@@ -2,7 +2,7 @@
 
 {% block content %}
 
-{% set sections = ui_config.get('homepage', {}).get('sections', ['hero', 'popular_apps', 'statistics', 'recently_updated', 'random_picks', 'icon_explanations', 'popular_categories', 'footer_markdown']) %}
+{% set sections = ui_config.get('homepage', {}).get('sections', ['hero', 'popular_apps', 'statistics', 'recently_updated', 'recently_added', 'random_picks', 'icon_explanations', 'popular_categories', 'footer_markdown']) %}
 
 {% set section_counter = namespace(value=0) %}
 {% macro get_section_bg_class() %}
@@ -197,6 +197,46 @@
                     {% if app.last_updated %}
                     <div class="text-xs text-success font-medium mt-auto">
                         Updated {{ format_date(app.last_updated) }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+  {% elif section == 'recently_added' and recent_added_apps %}
+    <!-- Recently Added -->
+    <div class="{{ get_section_bg_class() }} py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-text mb-4">
+                    Recently Added
+                </h2>
+                <p class="text-lg text-text-muted">
+                    New additions to {{ site_config.title }}
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {% for app in recent_added_apps %}
+                <div class="app-card {{ get_card_bg_class() }} rounded-lg border border-border shadow-sm p-5 flex flex-col h-full">
+                    <div class="flex items-center gap-2.5 mb-2">
+                        {{ get_app_icon_html(app, 'sm') | safe }}
+                        <h3 class="text-base font-semibold text-text truncate leading-tight">
+                            <a href="{{ url_for(get_app_url(app.id)) }}" class="hover:text-link">
+                                {{ app.name }}
+                            </a>
+                        </h3>
+                    </div>
+
+                    <p class="text-sm text-text-muted mb-3 flex-grow leading-relaxed">
+                        {{ truncate_description(app.description, ui_config.get('truncation', {}).get('homepage_description_length', 70)) }}
+                    </p>
+
+                    {% if app.date_added %}
+                    <div class="text-xs text-success font-medium mt-auto">
+                        Added {{ format_date(app.date_added) }}
                     </div>
                     {% endif %}
                 </div>
