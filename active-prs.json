@@ -4,15 +4,15 @@
     "title": "feat: add recently added section to homepage",
     "author": "Rabenherz112",
     "branch": "feat-recently-added",
-    "commit": "5ed734c",
-    "commit_full": "5ed734c5dc180aaf5a9aa1966935aae066d7a8cd",
+    "commit": "9249c6d",
+    "commit_full": "9249c6d6a34a3b9bb1b59449793abae787c45069",
     "url": "pr-85/",
     "pr_url": "https://github.com/Rabenherz112/aswg/pull/85",
-    "updated": "2026-06-06T08:53:53+00:00",
+    "updated": "2026-06-06T14:19:48+00:00",
     "build": {
-      "duration": "30s",
-      "total_files": "1355",
-      "html_pages": "1337",
+      "duration": "31s",
+      "total_files": "1357",
+      "html_pages": "1339",
       "size": "36M"
     }
   },
