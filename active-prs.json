@@ -1,22 +1,5 @@
 [
   {
-    "number": 85,
-    "title": "feat: add recently added section to homepage",
-    "author": "Rabenherz112",
-    "branch": "feat-recently-added",
-    "commit": "9249c6d",
-    "commit_full": "9249c6d6a34a3b9bb1b59449793abae787c45069",
-    "url": "pr-85/",
-    "pr_url": "https://github.com/Rabenherz112/aswg/pull/85",
-    "updated": "2026-06-06T14:19:48+00:00",
-    "build": {
-      "duration": "31s",
-      "total_files": "1357",
-      "html_pages": "1339",
-      "size": "36M"
-    }
-  },
-  {
     "number": 83,
     "title": "perf: reduce redundant generation & client render",
     "author": "Rabenherz112",
