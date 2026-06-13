@@ -4,15 +4,15 @@
     "title": "perf: reduce redundant generation & client render",
     "author": "Rabenherz112",
     "branch": "perf-aswg-p1",
-    "commit": "bb017f6",
-    "commit_full": "bb017f6dbd2929d1700b780504495a7a44d09a95",
+    "commit": "9980627",
+    "commit_full": "9980627ec990f40b263e061dd8eac577ecfe1c9b",
     "url": "pr-83/",
     "pr_url": "https://github.com/Rabenherz112/aswg/pull/83",
-    "updated": "2026-05-25T12:02:45+00:00",
+    "updated": "2026-06-13T07:35:17+00:00",
     "build": {
-      "duration": "19s",
-      "total_files": "1340",
-      "html_pages": "1322",
+      "duration": "20s",
+      "total_files": "1362",
+      "html_pages": "1344",
       "size": "36M"
     }
   }
