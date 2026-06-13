@@ -31,6 +31,7 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
         self.config = config
         self.licenses_data = None
         self.template_helpers = TemplateHelpers(config)
+        self.data_processor = DataProcessor(config)
         self.related_apps_config = self.config.get("related_apps", {})
         self.related_apps_finder = RelatedAppsFinder(self.related_apps_config)
 
@@ -141,18 +142,22 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
             print("  Search index disabled - skipping search data generation")
 
         # Generate pages
-        self._generate_homepage(applications, categories, statistics, markdown_data)
+        alternatives_data = None
+        if self.config.get("alternatives.enabled", False):
+            alternatives_data = self.data_processor.generate_alternatives_data(applications)
+
+        self._generate_homepage(applications, categories, statistics, markdown_data, alternatives_data)
         self._generate_browse_page(applications, categories)
-        self._generate_statistics_page(applications, categories, statistics)
+        self._generate_statistics_page(statistics)
         self._generate_app_detail_pages(applications)
         if self.config.get("roadmap.enabled", False):
             self._generate_roadmap_page()
 
         # Generate alternatives page
         if self.config.get("alternatives.enabled", False):
-            self._generate_alternatives_page(applications)
+            self._generate_alternatives_page(applications, alternatives_data)
             # Generate alternatives data file for client-side loading
-            self._generate_alternatives_data_file(applications)
+            self._generate_alternatives_data_file(alternatives_data)
             print("Alternatives data file generated")
 
         # Generate additional files
@@ -201,6 +206,7 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
         categories: Dict,
         statistics: Dict,
         markdown_data: Dict = None,
+        alternatives_data: Dict[str, Any] = None,
     ):
         """Generate the homepage."""
         template = self.jinja_env.get_template("pages/index.html")
@@ -245,10 +251,7 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
 
         # Get alternatives
         top_alternatives = []
-        if self.config.get("alternatives.enabled", False):
-            processor = DataProcessor(self.config)
-            alternatives_data = processor.generate_alternatives_data(applications)
-
+        if self.config.get("alternatives.enabled", False) and alternatives_data:
             # Get top alternatives (by number of alternative apps)
             min_alternatives = self.config.get("alternatives.min_alternatives", 2)
 
@@ -381,10 +384,10 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
             f"  Browse page generated (client-side rendering for {len(applications)} apps)"
         )
 
-    def _generate_alternatives_page(self, applications: List[Application]):
+    def _generate_alternatives_page(self, applications: List[Application], alternatives_data: Dict[str, Any] = None):
         """Generate the alternatives page."""
-        processor = DataProcessor(self.config)
-        alternatives_data = processor.generate_alternatives_data(applications)
+        if alternatives_data is None:
+            alternatives_data = self.data_processor.generate_alternatives_data(applications)
 
         # Apply minimum alternatives filter
         min_alternatives = self.config.get("alternatives.min_alternatives", 2)
@@ -393,18 +396,12 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
             if len(apps) >= min_alternatives
         }
 
-        # Convert Application objects to dictionaries for JSON serialization
-        filtered_alternatives = {}
-        for name, apps in filtered_alternatives_raw.items():
-            filtered_alternatives[name] = [asdict(app) for app in apps]
-
         template = self.jinja_env.get_template("pages/alternatives.html")
 
         content = template.render(
-            alternatives=filtered_alternatives,
             alternatives_statistics=alternatives_data['statistics'],
-            total_software=len(filtered_alternatives),
-            total_alternatives=sum(len(apps) for apps in filtered_alternatives.values()),
+            total_software=len(filtered_alternatives_raw),
+            total_alternatives=sum(len(apps) for apps in filtered_alternatives_raw.values()),
             total_all_applications=len(applications),  # Total applications in the dataset
             alternatives_config=self.config.get("alternatives", {}),
             page_title="Alternative Software"
@@ -417,16 +414,13 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(content)
 
-        print(f"Alternatives page generated ({len(filtered_alternatives)} software with alternatives)")
+        print(f"Alternatives page generated ({len(filtered_alternatives_raw)} software with alternatives)")
 
-    def _generate_statistics_page(
-        self, applications: List[Application], categories: Dict, statistics: Dict):
+    def _generate_statistics_page(self, statistics: Dict):
         """Generate the statistics page."""
         template = self.jinja_env.get_template("pages/statistics.html")
 
         content = template.render(
-            applications=applications,
-            categories=categories,
             statistics=statistics,
             page_title="Statistics",
         )
@@ -543,11 +537,8 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
 
         print("  Search data file generated")
 
-    def _generate_alternatives_data_file(self, applications: List[Application]) -> Dict[str, Any]:
+    def _generate_alternatives_data_file(self, alternatives_data: Dict[str, Any]) -> Dict[str, Any]:
         """Generate alternatives data JSON file for client-side alternatives page."""
-        processor = DataProcessor(self.config)
-        alternatives_data = processor.generate_alternatives_data(applications)
-
         # Apply minimum alternatives filter
         min_alternatives = self.config.get("alternatives.min_alternatives", 2)
         filtered_alternatives = {
@@ -574,45 +565,44 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
 
         return json_data
 
+    def _write_sitemap_url(
+        self, file_handle, site_url: str, path: str, current_date: str, priority: str
+    ):
+        """Write one sitemap URL entry to file."""
+        file_handle.write(
+            "  <url>\n"
+            f"    <loc>{site_url}{path}</loc>\n"
+            f"    <lastmod>{current_date}</lastmod>\n"
+            "    <changefreq>weekly</changefreq>\n"
+            f"    <priority>{priority}</priority>\n"
+            "  </url>\n"
+        )
+
     def _generate_sitemap(self, applications: List[Application]):
         """Generate XML sitemap."""
-
-        template = self.jinja_env.get_template("sitemap.xml")
-        base_path = self.config.get('site.base_path', '').rstrip('/')
-
-        # Current date in W3C Datetime format (YYYY-MM-DD)
-        current_date = datetime.now().strftime('%Y-%m-%d')
-
-        urls = [
-            {"loc": base_path + "/", "lastmod": current_date, "priority": "1.0"},  # Homepage
-            {"loc": base_path + "/browse.html", "lastmod": current_date, "priority": "0.9"},  # Browse page
-            {"loc": base_path + "/statistics.html", "lastmod": current_date, "priority": "0.7"},  # Statistics page
+        base_path = self.config.get("site.base_path", "").rstrip("/")
+        site_url = self.config.get("site.url", "https://awesome-selfhosted.net") + base_path
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        static_paths = [
+            ("/", "1.0"),
+            ("/browse.html", "0.9"),
+            ("/statistics.html", "0.7"),
         ]
-
         if self.config.get("roadmap.enabled", False):
             # Roadmap is a first-class interactive workflow, so keep priority aligned with alternatives.
-            urls.append({"loc": base_path + "/roadmap.html", "lastmod": current_date, "priority": "0.8"})
-
-        # Add alternatives page if enabled
+            static_paths.append(("/roadmap.html", "0.8"))
         if self.config.get("alternatives.enabled", False):
-            urls.append({"loc": base_path + "/alternatives.html", "lastmod": current_date, "priority": "0.8"})
-
-        # Add application pages
-        for app in applications:
-            urls.append({
-                "loc": base_path + f"/apps/{app.id}.html",
-                "lastmod": current_date,
-                "priority": "0.1"
-            })
-
-        content = template.render(
-            urls=urls,
-            site_url=self.config.get("site.url", "https://awesome-selfhosted.net") + base_path,
-        )
+            static_paths.append(("/alternatives.html", "0.8"))
 
         output_path = self.config.output_dir / "sitemap.xml"
         with open(output_path, "w", encoding="utf-8") as f:
-            f.write(content)
+            f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+            f.write('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n')
+            for path, priority in static_paths:
+                self._write_sitemap_url(f, site_url, path, current_date, priority)
+            for app in applications:
+                self._write_sitemap_url(f, site_url, f"/apps/{app.id}.html", current_date, "0.1")
+            f.write("</urlset>\n")
 
         print("  Sitemap generated")
 

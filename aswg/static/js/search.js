@@ -8,8 +8,10 @@
     // Initialize search when page loads
     document.addEventListener('DOMContentLoaded', function() {
         loadSearchConfig();
-        loadSearchData();
         initializeSearchInputs();
+        if (hasSearchResultInputs()) {
+            loadSearchData();
+        }
     });
     
     // Load search configuration from meta tags
@@ -25,14 +27,23 @@
         };
     }
     const basePath = document.querySelector('meta[name="base-path"]')?.content || '';
+
+    function hasSearchResultInputs() {
+        return Boolean(document.getElementById('search-input') || document.getElementById('mobile-search-input'));
+    }
     
     // Load search data
     async function loadSearchData() {
         try {
-            const response = await fetch(basePath + '/static/data/search.json');
-            if (response.ok) {
-                searchData = await response.json();
+            if (!window.__aswgSearchDataPromise) {
+                window.__aswgSearchDataPromise = fetch(basePath + '/static/data/search.json')
+                    .then(response => response.ok ? response.json() : {})
+                    .catch(error => {
+                        console.warn('Search data not available:', error);
+                        return {};
+                    });
             }
+            searchData = await window.__aswgSearchDataPromise;
         } catch (error) {
             console.warn('Search data not available:', error);
         }

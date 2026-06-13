@@ -10,6 +10,7 @@ class BrowsePage {
         this.categories = new Set();
         this.selectedCategories = new Set();
         this.nonFreeLicenses = new Set();
+        this.searchData = null;
         this.showNonFreeOnly = false;
         this.currentSort = 'name';
         this.basePath = document.querySelector('meta[name="base-path"]')?.content || '';
@@ -118,11 +119,19 @@ class BrowsePage {
 
     async loadSearchData() {
         try {
-            const response = await fetch(this.basePath + '/static/data/search.json');
-            const data = await response.json();
-            this.applications = data.apps || [];
+            if (!window.__aswgSearchDataPromise) {
+                window.__aswgSearchDataPromise = fetch(this.basePath + '/static/data/search.json')
+                    .then(response => response.json())
+                    .catch(error => {
+                        console.error('Failed to load shared search data:', error);
+                        return {};
+                    });
+            }
+            const data = await window.__aswgSearchDataPromise;
+            this.searchData = data || {};
+            this.applications = this.searchData.apps || [];
             this.filteredApplications = [...this.applications];
-            this.gitDataAvailable = data.git_data_available || false;
+            this.gitDataAvailable = this.searchData.git_data_available || false;
         } catch (error) {
             console.error('Failed to load search data:', error);
         }
@@ -250,8 +259,10 @@ class BrowsePage {
         // An empty nonfree_licenses array is the normal state for free-only data repos;
         // the toggle DOM is hidden server-side, so no extra signal is required here.
         try {
-            const response = await fetch(this.basePath + '/static/data/search.json');
-            const data = await response.json();
+            if (!this.searchData) {
+                await this.loadSearchData();
+            }
+            const data = this.searchData || {};
 
             if (data.nonfree_licenses && Array.isArray(data.nonfree_licenses)) {
                 data.nonfree_licenses.forEach(license => {
@@ -535,7 +546,6 @@ class BrowsePage {
             this.updateRangeHighlight(minSlider, maxSlider, highlight);
             this.updateResetButton(resetId, minPos !== 0 || maxPos !== steps.length - 1);
             this.currentPage = 1;
-            this.filterSortAndRender({ deferFacetCounts: true });
             // Use this.starsMax to ensure sync matches stored state (may be Infinity when at max)
             this.syncStarsSlider(syncTarget, minVal, this.starsMax);
         });
@@ -565,7 +575,6 @@ class BrowsePage {
             this.updateRangeHighlight(minSlider, maxSlider, highlight);
             this.updateResetButton(resetId, minPos !== 0 || maxPos !== steps.length - 1);
             this.currentPage = 1;
-            this.filterSortAndRender({ deferFacetCounts: true });
             this.syncStarsSlider(syncTarget, minVal, isAtMax ? Infinity : maxVal);
         });
 
@@ -714,7 +723,6 @@ class BrowsePage {
             this.updateRangeHighlight(minSlider, maxSlider, highlight);
             this.updateResetButton(resetId, minPos !== 0 || maxPos !== steps.length - 1);
             this.currentPage = 1;
-            this.filterSortAndRender({ deferFacetCounts: true });
             // Use this.updatedMax to ensure sync matches stored state (may be Infinity when at max)
             this.syncUpdatedSlider(syncTarget, minVal, this.updatedMax);
         });
@@ -743,7 +751,6 @@ class BrowsePage {
             this.updateRangeHighlight(minSlider, maxSlider, highlight);
             this.updateResetButton(resetId, minPos !== 0 || maxPos !== steps.length - 1);
             this.currentPage = 1;
-            this.filterSortAndRender({ deferFacetCounts: true });
             this.syncUpdatedSlider(syncTarget, minVal, maxPos === steps.length - 1 ? Infinity : maxVal);
         });
 
@@ -1496,10 +1503,12 @@ class BrowsePage {
         }
 
         // Render applications for current page
+        const fragment = document.createDocumentFragment();
         pageApplications.forEach(app => {
             const appCard = this.createApplicationCard(app);
-            gridContainer.appendChild(appCard);
+            fragment.appendChild(appCard);
         });
+        gridContainer.appendChild(fragment);
 
         // Show loading message if no applications
         if (pageApplications.length === 0) {
