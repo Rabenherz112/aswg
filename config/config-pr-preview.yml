@@ -63,6 +63,7 @@ ui:
   limits:
     homepage_popular_apps: 8
     homepage_recently_updated: 8
+    homepage_recently_added: 8
     homepage_random_picks: 6
     homepage_category_stats: 8
     homepage_alternatives: 6
@@ -89,6 +90,7 @@ ui:
       - hero
       - popular_apps
       - recently_updated
+      - recently_added
       - random_picks
       - alternatives
       - popular_categories

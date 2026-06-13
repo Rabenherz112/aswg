@@ -237,6 +237,13 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
             reverse=True,
         )[: limits.get("homepage_recently_updated", 8)]
 
+        # Get recently added applications
+        recent_added_apps = sorted(
+            [app for app in filtered_apps if app.date_added],
+            key=lambda x: x.date_added or "",
+            reverse=True,
+        )[: limits.get("homepage_recently_added", 8)]
+
         # Get random picks (high quality apps with good ratings)
         quality_apps = [app for app in filtered_apps if app.stars and app.stars >= 100]
         random.shuffle(quality_apps)
@@ -304,6 +311,7 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
         content = template.render(
             popular_apps=popular_apps,
             recent_apps=recent_apps,
+            recent_added_apps=recent_added_apps,
             random_picks=random_picks,
             alternatives=top_alternatives,
             categories=unique_category_stats[: limits.get("homepage_popular_categories", 8)],

@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file. The format 
 ### Additions
 
 - Added a Roadmap page with a Kanban view and sharing support
+- Added "Recently Added" section to the homepage
 - Filter result counts on the browse page now update automatically as you apply filters
 
 ### Bug Fixes
