@@ -4,7 +4,8 @@ Template helper functions for Jinja2 templates.
 
 import re
 from datetime import datetime
-from typing import List, Any
+from pathlib import Path
+from typing import Dict, List, Any, Optional
 from jinja2 import Template, TemplateError
 from .config import Config
 
@@ -16,6 +17,8 @@ class TemplateHelpers:  # pylint: disable=too-many-public-methods
         """Initialize template helpers with configuration and license data."""
         self.config = config
         self.licenses_data = licenses_data or {}
+        # app_id -> relative asset path like "static/icons/id.webp" (set during build)
+        self.local_icon_paths: Dict[str, str] = {}
 
     def slugify(self, text: str) -> str:
         """Convert text to URL-friendly slug."""
@@ -35,6 +38,66 @@ class TemplateHelpers:  # pylint: disable=too-many-public-methods
         hue = abs(hash_val) % 360
         return f"hsl({hue}, 45%, 55%)"
 
+    def _normalize_icon_extensions(self) -> List[str]:
+        """Return configured icon extensions with a leading dot."""
+        extensions = self.config.get("data.icon_extensions", [".webp"])
+        if not isinstance(extensions, list):
+            return [".webp"]
+        normalized = []
+        for ext in extensions:
+            if not isinstance(ext, str) or not ext.strip():
+                continue
+            value = ext.strip().lower()
+            if not value.startswith("."):
+                value = f".{value}"
+            normalized.append(value)
+        return normalized or [".webp"]
+
+    def get_icons_dir(self) -> Path:
+        """Return the data-repo icons directory path."""
+        data_dir = Path(self.config.get("data.data_dir", "awesome-selfhosted-data"))
+        icons_dir = self.config.get("data.icons_dir", "icons")
+        return data_dir / icons_dir
+
+    def find_local_icon_source(self, app_id: str) -> Optional[Path]:
+        """Return first existing icons/{app_id}{ext} path per data.icon_extensions."""
+        if not app_id:
+            return None
+        icons_dir = self.get_icons_dir()
+        if not icons_dir.is_dir():
+            return None
+
+        extensions = self._normalize_icon_extensions()
+        first_match = None
+        for ext in extensions:
+            candidate = icons_dir / f"{app_id}{ext}"
+            if candidate.is_file():
+                if first_match is None:
+                    first_match = candidate
+                elif candidate != first_match:
+                    print(
+                        f"Warning: multiple local icons for '{app_id}'; "
+                        f"using {first_match.name} (priority over {candidate.name})"
+                    )
+                    break
+        return first_match
+
+    def resolve_display_icon_url(self, app, local_icon_rel: Optional[str] = None) -> Optional[str]:
+        """Return img src URL for built site, or None for letter-avatar fallback."""
+        if not self.config.get("ui.show_project_icons", True):
+            return None
+
+        if local_icon_rel is None and getattr(app, "id", None):
+            local_icon_rel = self.local_icon_paths.get(app.id)
+
+        if self.config.get("ui.use_local_icons", True) and local_icon_rel:
+            return self.asset_url(local_icon_rel)
+
+        if self.config.get("ui.fallback_to_remote_icon_url", True):
+            return getattr(app, "icon_url", None) or None
+
+        return None
+
     def get_app_icon_html(self, app, size: str = "sm") -> str:
         """Return HTML for an app icon or letter-avatar fallback. Returns empty string if disabled."""
         if not self.config.get("ui.show_project_icons", True):
@@ -49,7 +112,7 @@ class TemplateHelpers:  # pylint: disable=too-many-public-methods
 
         first_letter = app.name[0].upper() if app.name else "?"
         color = self.get_letter_avatar_color(app.name)
-        icon_url = getattr(app, "icon_url", None)
+        icon_url = self.resolve_display_icon_url(app)
 
         if icon_url:
             return (

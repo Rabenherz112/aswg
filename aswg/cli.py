@@ -279,12 +279,26 @@ def cmd_info(config):  # pylint: disable=too-many-locals,too-many-statements
         software_dir = data_dir / data_config.get('software_dir', 'software')
         categories_dir = data_dir / data_config.get('categories_dir', 'tags')
         platforms_dir = data_dir / data_config.get('platforms_dir', 'platforms')
+        icons_dir = data_dir / data_config.get('icons_dir', 'icons')
         sw_count = len(list(software_dir.glob('*.yml'))) if software_dir.exists() else 0
         cat_count = len(list(categories_dir.glob('*.yml'))) if categories_dir.exists() else 0
         plat_count = len(list(platforms_dir.glob('*.yml'))) if platforms_dir.exists() else 0
+        icon_extensions = data_config.get('icon_extensions', ['.webp'])
+        if not isinstance(icon_extensions, list):
+            icon_extensions = ['.webp']
+        icon_count = 0
+        if icons_dir.is_dir():
+            for ext in icon_extensions:
+                if not isinstance(ext, str) or not ext.strip():
+                    continue
+                value = ext.strip().lower()
+                if not value.startswith('.'):
+                    value = f'.{value}'
+                icon_count += len(list(icons_dir.glob(f'*{value}')))
         print(f"   Software files: {sw_count}")
         print(f"   Category files: {cat_count}")
         print(f"   Platforms files: {plat_count}")
+        print(f"   Icon files: {icon_count}")
     else:
         print("   Status: Not found")
         print("   Run 'aswg fetch' to download data")
@@ -294,6 +308,8 @@ def cmd_info(config):  # pylint: disable=too-many-locals,too-many-statements
     print(f"   Software directory: {data_config.get('software_dir', 'software')}")
     print(f"   Categories directory: {data_config.get('categories_dir', 'tags')}")
     print(f"   Platforms directory: {data_config.get('platforms_dir', 'platforms')}")
+    print(f"   Icons directory: {data_config.get('icons_dir', 'icons')}")
+    print(f"   Icon extensions: {data_config.get('icon_extensions', ['.webp'])}")
     print(f"   Licenses file: {data_config.get('licenses_file', 'licenses.yml')}")
     nonfree_file = data_config.get('licenses_nonfree_file')
     print(f"   Licenses nonfree file: {nonfree_file if nonfree_file else '(not configured)'}")

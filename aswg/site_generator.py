@@ -7,7 +7,7 @@ import random
 import shutil
 from dataclasses import asdict
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 try:
@@ -33,6 +33,8 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
         self.template_helpers = TemplateHelpers(config)
         self.related_apps_config = self.config.get("related_apps", {})
         self.related_apps_finder = RelatedAppsFinder(self.related_apps_config)
+        # app_id -> relative asset path like "static/icons/id.webp"
+        self._local_icon_paths: Dict[str, str] = {}
 
         # Set up Jinja2 environment
         self.jinja_env = Environment(
@@ -128,8 +130,9 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
         # Ensure output directories exist
         self.config.ensure_directories()
 
-        # Copy static assets
+        # Copy static assets, then local project icons (icons need the static tree)
         self._copy_static_assets()
+        self._copy_app_icons(applications)
 
         # Generate search data
         if self.config.get("generation.enable_search_index", True):
@@ -194,6 +197,38 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
                     dst_path.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(item, dst_path)
             print("  Static assets copied")
+
+    def _copy_app_icons(self, applications: List[Application]):
+        """Copy local project icons into output/static/icons and cache resolved paths."""
+        self._local_icon_paths = {}
+        self.template_helpers.local_icon_paths = self._local_icon_paths
+
+        if not self.config.get("ui.show_project_icons", True):
+            return
+        if not self.config.get("ui.use_local_icons", True):
+            return
+
+        output_icons = self.config.output_dir / "static" / "icons"
+        output_icons.mkdir(parents=True, exist_ok=True)
+        copied = 0
+
+        for app in applications:
+            source = self.template_helpers.find_local_icon_source(app.id)
+            if source is None:
+                continue
+            dest = output_icons / source.name
+            shutil.copy2(source, dest)
+            rel_path = f"static/icons/{source.name}"
+            self._local_icon_paths[app.id] = rel_path
+            copied += 1
+
+        print(f"  Copied {copied} project icons")
+
+    def _resolve_app_icon_url(self, app: Application) -> Optional[str]:
+        """Resolve display icon URL for an app using build-time local icon cache."""
+        return self.template_helpers.resolve_display_icon_url(
+            app, local_icon_rel=self._local_icon_paths.get(app.id)
+        )
 
     def _generate_homepage(
         self,
@@ -503,7 +538,7 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
                 "stars": app.stars or 0,
                 "last_updated": app.last_updated,
                 "depends_3rdparty": app.depends_3rdparty,
-                "icon_url": app.icon_url,
+                "icon_url": self._resolve_app_icon_url(app),
                 "current_release": app.current_release,
                 "commit_history": app.commit_history,
                 "is_nonfree": self.related_apps_finder.is_app_nonfree(app),
@@ -548,13 +583,18 @@ class SiteGenerator:  # pylint: disable=too-few-public-methods
         processor = DataProcessor(self.config)
         alternatives_data = processor.generate_alternatives_data(applications)
 
-        # Apply minimum alternatives filter
+        # Apply minimum alternatives filter; override icon_url with resolved display URL
         min_alternatives = self.config.get("alternatives.min_alternatives", 2)
-        filtered_alternatives = {
-            name: [asdict(app) for app in apps]
-            for name, apps in alternatives_data['alternatives'].items()
-            if len(apps) >= min_alternatives
-        }
+        filtered_alternatives = {}
+        for name, apps in alternatives_data['alternatives'].items():
+            if len(apps) < min_alternatives:
+                continue
+            serialized = []
+            for app in apps:
+                app_dict = asdict(app)
+                app_dict["icon_url"] = self._resolve_app_icon_url(app)
+                serialized.append(app_dict)
+            filtered_alternatives[name] = serialized
 
         # Create the data structure for the JSON file
         json_data = {
