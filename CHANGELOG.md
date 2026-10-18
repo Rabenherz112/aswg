@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file. The format 
 - Added a Roadmap page with a Kanban view and sharing support
 - Added "Recently Added" section to the homepage
 - Filter result counts on the browse page now update automatically as you apply filters
+- Added support for local project icons copied from the data repository (`data.icons_dir`), with configurable extension priority and optional remote `icon_url` fallback
 
 ### Bug Fixes
 

@@ -18,6 +18,8 @@ data:
   software_dir: "software"
   categories_dir: "tags"
   platforms_dir: "platforms"
+  icons_dir: "icons"
+  icon_extensions: [".webp"]
   licenses_file: "licenses.yml"
   # Optional: omit for data repos that only ship free licenses (e.g. awesome-sysadmin-data).
   # When unset, the "Include Non-Free" toggle is hidden and no non-free filtering is applied.
@@ -61,6 +63,8 @@ ui:
       external: true
 
   show_project_icons: false
+  use_local_icons: true
+  fallback_to_remote_icon_url: true
 
   # Content limits for different sections
   limits:
