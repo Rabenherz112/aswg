@@ -1,5 +1,22 @@
 [
   {
+    "number": 87,
+    "title": "feat: add support for local project icons with configurable extensions",
+    "author": "Rabenherz112",
+    "branch": "feat-local-icons",
+    "commit": "064866a",
+    "commit_full": "064866ae68be35ae9d0b6dfb22b17831580cc9bf",
+    "url": "pr-87/",
+    "pr_url": "https://github.com/Rabenherz112/aswg/pull/87",
+    "updated": "2026-10-18T12:31:31+00:00",
+    "build": {
+      "duration": "37s",
+      "total_files": "1869",
+      "html_pages": "1361",
+      "size": "41M"
+    }
+  },
+  {
     "number": 83,
     "title": "perf: reduce redundant generation & client render",
     "author": "Rabenherz112",
